@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="lesson-5-variables">Lesson 5: Variables</h1>
+<p>In order to make your <strong>Scenes</strong> and
+<strong>Acts</strong> interact with each others, you can define and
+reference “variables”, which <strong>InsDog</strong> provides.</p>
+<p>An <strong>Act</strong> can process only one variable at a time,
+while <strong>Scenes</strong> can interact with multiple variables.</p>
+<p>An <strong>Act</strong> doesn’t perform by itself, but it performs
+only under a <strong>Scene</strong>. A <strong>Scene</strong> has its
+own namespace for variables, which is called “Variable Store”. When a
+<strong>Scene A</strong> depends on another <strong>Scene B</strong>,
+variables exported by <strong>Scene B</strong> are visible to
+<strong>Scene A</strong>.</p>
+<p>Following is an example for variable handling.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="st">&quot;performTargetFunction&quot;</span><span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    planExecutionWith <span class="op">=</span> DEPENDENCY_BASED<span class="op">))</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> LessonVariables <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Export</span><span class="op">()</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">openBasePage</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="fu">openNewPage</span><span class="op">())</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Export</span><span class="op">({</span><span class="st">&quot;page&quot;</span><span class="op">,</span> <span class="st">&quot;childPage&quot;</span><span class="op">})</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;openBasePage&quot;</span><span class="op">)</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">performTargetFunction</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="fu">clickButton1</span><span class="op">())</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="st">&quot;childPage&quot;</span><span class="op">,</span> <span class="fu">openChildPage</span><span class="op">())</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span>Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;childPage&quot;</span><span class="op">)</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                          <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="fu">screenshot</span><span class="op">())</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>                          <span class="op">.</span><span class="fu">end</span><span class="op">())</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">@When</span><span class="op">(</span><span class="st">&quot;performTargetFunction&quot;</span><span class="op">)</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">thenClickButton2</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="fu">clickButton2</span><span class="op">())</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">@When</span><span class="op">(</span><span class="st">&quot;performTargetFunction&quot;</span><span class="op">)</span></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">thenClickButton3</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;childPage&quot;</span><span class="op">)</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="fu">clickButton3</span><span class="op">())</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Both <code>thenClickButton2</code> and <code>thenClickButton3</code>
+depend on <code>performTargetFuntion</code>.
+<code>performTargetFunction</code> itself depends ong
+<code>openBasePage</code>.</p>
+<p><code>thenClickButton2</code> and <code>3</code> can access variables
+<code>performTargetFunction</code> and <code>openBasePage</code> export.
+<code>@Export</code> is an annotation with which variables to be
+exported to others are specified. <code>performTargetFunction</code>
+exports <code>page</code> and <code>childPage</code> explicitly.
+<code>openBasePage</code> method has <code>@Export</code> annotation
+which doesn’t specify any name of variable. In this case, only a
+variable whose name is <code>page</code> is exported as a default<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>. These are variables whose values
+they can read.</p>
+<p>Output of this class will be like following:</p>
+<pre><code>[INFO ] [main] - LessonVariables     : value:      [o]performTargetFunction
+[INFO ] [main] - LessonVariables     : value:        [o:0]output:[performTargetFunction] work:[work-id-24039137]
+[INFO ] [main] - LessonVariables     : value:        [o:0]clickButton1[page]
+[INFO ] [main] - LessonVariables     : value:        [o:0]openChildPage[page]
+[INFO ] [main] - LessonVariables     : value:        [o:0]output:[work-id-24039137] work:[work-id-251520863]
+[INFO ] [main] - LessonVariables     : value:        [o:0]screenshot[childPage]
+[INFO ] [main] - LessonVariables     : value:      [o]thenClickButton2
+[INFO ] [main] - LessonVariables     : value:        [o:0]output:[thenClickButton2] work:[work-id-1398260359]
+[INFO ] [main] - LessonVariables     : value:        [o:0]clickButton2[page]
+[INFO ] [main] - LessonVariables     : value:      [o]thenClickButton3
+[INFO ] [main] - LessonVariables     : value:        [o:0]output:[thenClickButton3] work:[work-id-1531182070]
+[INFO ] [main] - LessonVariables     : value:        [o:0]clickButton3[childPage]</code></pre>
+<h2 id="footnotes">Footnotes</h2>
+<ul>
+<li></li>
+</ul>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Note that, the default of <code>@Export</code> may be
+changed in the future. This default is defined assuming that users of
+<strong>InsDog</strong> mainly will use it as a helper library of web
+UI’s end-to-end tests. However, <strong>InsDog</strong> can cover more
+than that. In such a context, where end-to-end UI tests and API/CLI
+tests are uniformly designed and implemented, the name to be chosen for
+it wouldn’t be <code>page</code>, but <code>session</code> or something
+like that.<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+</body>
+</html>

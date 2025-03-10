@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1
+id="lesson-3-dependency-handling-dependency_based-execution-mode">Lesson
+3: Dependency Handling (<code>DEPENDENCY_BASED</code> Execution
+Mode)</h1>
+<p>If we write down rules applied to resolve what scenes and in what
+order they are executed in an imperative way, it will as follows:</p>
+<ol type="1">
+<li>Explicitly declared methods are executed in the declared stage.</li>
+<li>Implicit execution never happens when <code>PASSTHTHROUGH</code>
+mode is selected.</li>
+<li>In <code>DEPENDENCY_BASED</code> mode, following rules are
+respected.
+<ol type="1">
+<li>For <code>@DependsOn</code>:
+<ol type="1">
+<li>Implicit execution happens in <code>beforeAll</code> stage.</li>
+<li>Implicit execution happens at most only once per scene. This means
+when multiple scenes depend on the same single scene, the scene depended
+on will be executed only once.</li>
+<li>In implicit scene execution, the order of the explicit scenes that
+depend on implicit scenes is respected. That is, topological sort is
+applied to the dependency graph composed of the scene methods and scenes
+not explicit declared will be put in the beginning of
+<code>beforeAll</code> stage.</li>
+</ol></li>
+<li>For <code>@When</code>:
+<ol type="1">
+<li>Implicit execution happens only when the scene mentioned by the
+<code>@When</code> is explicitly specified.</li>
+<li>Implicit execution happens right after the scene mentioned by the
+<code>@When</code> annotation.</li>
+</ol></li>
+<li>For <code>@PreparedBy</code>:
+<ol type="1">
+<li>Implicit execution happens only when it is the first
+<code>@PreparedBy</code> annotation for the scene or all the previous
+ones failed.</li>
+<li>After one sequence defined by <code>@PreparedBy</code> has succeeded
+the scene itself will be performed. If the scene succeeds, the rest
+scenes provided by <code>@PreparedBy</code> will not be performed.</li>
+<li>When the previous scene or any of <code>@PreparedBy</code> scene
+fails, the next one will be tried. If it is the last one, the entire
+scene considered failed.</li>
+</ol></li>
+<li>For <code>@ClosedBy</code>:
+<ol type="1">
+<li>This is only valid for scenes in <code>beforeAll</code> and
+<code>beforeEach</code> stages.</li>
+<li>If a scene annotated with this in <code>beforeAll</code> stage
+succeeds, the scene specified by this annotation will be attempted in
+<code>afterAll</code> stage.</li>
+<li>If it is in <code>beforeEach</code> stage, the specified scene will
+be attempted in <code>afterEach</code> stage.</li>
+</ol></li>
+</ol></li>
+</ol>
+<p>Don’t get scared. This looks a bit complex but just carefully
+designed to model what human does a manual test. In this section we will
+go over the annotations mentioned in the rules above one by one with
+working examples.</p>
+<h2 id="dependson-the-simple-dependency"><code>@DependsOn</code>: The
+Simple Dependency</h2>
+<p><code>@DependsOn</code> used to declare regular dependencies.</p>
+<!-- @formatter:off -->
+<blockquote>
+<ol start="3" type="1">
+<li>In <code>DEPENDENCY_BASED</code> mode, following rules are
+respected.
+<ol type="1">
+<li>For <code>@DependsOn</code>:
+<ol type="1">
+<li>Implicit execution happens in <code>beforeAll</code> stage.</li>
+<li>Implicit execution happens at most only once per scene. This means
+when multiple scenes depend on the same single scene, the scene depended
+on will be executed only once.</li>
+<li>In implicit scene execution, the order of the explicit scenes that
+depend on implicit scenes is respected. That is, topological sort is
+applied to the dependency graph composed of the scene methods and scenes
+not explicit declared will be put in the beginning of
+<code>beforeAll</code> stage. <!-- @formatter:on --></li>
+</ol></li>
+</ol></li>
+</ol>
+</blockquote>
+<p>Following is the usage of the annotation.:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="st">&quot;sceneMethod&quot;</span><span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    planExecutionWith <span class="op">=</span> DEPENDENCY_BASED<span class="op">))</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Lesson <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">setUpMethod</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Let<span class="op">&lt;&gt;(</span><span class="st">&quot;InsDog&quot;</span><span class="op">))</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Sink<span class="op">&lt;&gt;(</span><span class="bu">System</span><span class="op">.</span><span class="fu">out</span><span class="op">::</span>println<span class="op">))</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;setUpMethod&quot;</span><span class="op">)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">sceneMethod</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Let<span class="op">&lt;&gt;(</span><span class="st">&quot;InsDog&quot;</span><span class="op">))</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Sink<span class="op">&lt;&gt;(</span><span class="bu">System</span><span class="op">.</span><span class="fu">out</span><span class="op">::</span>println<span class="op">))</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Here is a note about behaviors when you specify the execution order
+in <code>@AutotestExecution</code>, which is against the dependency
+declarations by <code>@DependsOn</code> and others. They are not defined
+as of now.</p>
+<p><strong>Execution Plan:</strong></p>
+<pre class="text"><code>[INFO ] [2024/12/27 17:00:37.027] [main] - ----
+[INFO ] [2024/12/27 17:00:37.028] [main] - Execution plan is as follows:
+[INFO ] [2024/12/27 17:00:37.028] [main] - - beforeAll:      [setUpMethod]
+[INFO ] [2024/12/27 17:00:37.028] [main] - - beforeEach:     []
+[INFO ] [2024/12/27 17:00:37.028] [main] - - value:          [sceneMethod]
+[INFO ] [2024/12/27 17:00:37.028] [main] - - afterEach:      []
+[INFO ] [2024/12/27 17:00:37.028] [main] - - afterAll:       []
+[INFO ] [2024/12/27 17:00:37.028] [main] - ----</code></pre>
+<p><strong>Action Tree: beforeAll:</strong></p>
+<pre class="text"><code>[INFO ] [2024/12/27 17:00:37.035] [main] - LessonDependsOn     : beforeAll:  [o]setUpMethod                                                  
+[INFO ] [2024/12/27 17:00:37.036] [main] - LessonDependsOn     : beforeAll:  +-[o:0]BEGIN[setUpMethod]@[work-id-1659515968]
+[INFO ] [2024/12/27 17:00:37.036] [main] - LessonDependsOn     : beforeAll:  |-+-[o:0]let[InsDog][page]
+[INFO ] [2024/12/27 17:00:37.036] [main] - LessonDependsOn     : beforeAll:  | +-[o:0]sink[page]
+[INFO ] [2024/12/27 17:00:37.036] [main] - LessonDependsOn     : beforeAll:  +-[o:0]END[setUpMethod]</code></pre>
+<p><strong>Action Tree: test:</strong></p>
+<pre class="text"><code>[INFO ] [2024/12/27 17:00:37.047] [main] - LessonDependsOn     : value:      [o]sceneMethod
+[INFO ] [2024/12/27 17:00:37.048] [main] - LessonDependsOn     : value:      +-[o:0]BEGIN[sceneMethod]@[work-id-1337829755]
+[INFO ] [2024/12/27 17:00:37.048] [main] - LessonDependsOn     : value:      |-+-[o:0]let[InsDog][page]
+[INFO ] [2024/12/27 17:00:37.048] [main] - LessonDependsOn     : value:      | +-[o:0]sink[page]
+[INFO ] [2024/12/27 17:00:37.048] [main] - LessonDependsOn     : value:      +-[o:0]END[sceneMethod]</code></pre>
+<p>Here is another question. Except for a set-up method, what do we want
+to specify here? You should specify other scene returning methods,
+without which the method don’t make sense. For instance, if you have a
+scene, that does something on a web page, but the page is a child of
+some others. Without opening the child page, it doesn’t make sense. But,
+if we specify both of them, do we really want to specify it? It’s a
+valid question. You can be lazy to skip it for now. In longer term, the
+framework will implement other execution modes, such as “reverse order
+execution”. Until the day, it will not use the information.</p>
+<h2 id="when-dependency-for-assertions"><code>@When</code>: Dependency
+for Assertions</h2>
+<p><code>@When</code> is an annotation useful for defining
+“assertions”.</p>
+<!-- @formatter:off -->
+<blockquote>
+<ol start="3" type="1">
+<li><ol start="2" type="1">
+<li>For <code>@When</code>:
+<ol type="1">
+<li>Implicit execution happens only when the scene mentioned by the
+<code>@When</code> is explicitly specified.</li>
+<li>Implicit execution happens right after the scene mentioned by the
+<code>@When</code> annotation.</li>
+</ol></li>
+</ol></li>
+</ol>
+<!-- @formatter:off -->
+</blockquote>
+<p>Following code shows its usage.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="st">&quot;performTargetFunction&quot;</span><span class="op">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    planExecutionWith <span class="op">=</span> DEPENDENCY_BASED<span class="op">))</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> LessonWhen <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">performTargetFunction</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">@When</span><span class="op">(</span><span class="st">&quot;performFunction&quot;</span><span class="op">)</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">thenDatabaseRecordUpdated</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">add</span><span class="op">(</span><span class="fu">wasDatabaseRecordUpdated</span><span class="op">()).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>In the <code>@AutotestExecution</code> annotation, only
+<code>performFunction</code> is mentioned. But the
+<code>thenDatabaseRecordUpdated</code> will be executed along with it.
+In your IDE, it will be shown as:</p>
+<pre class="text"><code>+ LessonWhen:
+  + runTestAction:
+    + [1]: performTargetFunction
+    + [2]: thenDatabaseRecordWasUpdated </code></pre>
+<p>If you focus on the method declaration is:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Named</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">@When</span><span class="op">(</span><span class="st">&quot;performFunction&quot;</span><span class="op">)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> Scene <span class="fu">thenDatabaseRecordUpdated</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">add</span><span class="op">(</span><span class="fu">wasDatabaseRecordUpdated</span><span class="op">()).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is as readable as “When performFunction, then database record
+was updated.”</p>
+<p>Not only that, perhaps, you may want to write multiple assertions for
+a single function. That will look like in your IDE’s test run window as
+follows.:</p>
+<pre class="text"><code>+ LessonWhen:
+  + runTestAction:
+    + [1]: performTargetFunction
+    + [2]: thenDatabaseRecordWasUpdated 
+    + [3]: thenWindowWasUpdated </code></pre>
+<p>Also, the execution plan and action tree look as follows.</p>
+<p><strong>Execution Plan:</strong></p>
+<pre class="text"><code>[INFO ] [2024/12/27 15:45:17.221] [main] - ----
+[INFO ] [2024/12/27 15:45:17.221] [main] - Execution plan is as follows:
+[INFO ] [2024/12/27 15:45:17.221] [main] - - beforeAll:      []
+[INFO ] [2024/12/27 15:45:17.221] [main] - - beforeEach:     []
+[INFO ] [2024/12/27 15:45:17.222] [main] - - value:          [performFunction, thenDatabaseRecordUpdated]
+[INFO ] [2024/12/27 15:45:17.222] [main] - - afterEach:      []
+[INFO ] [2024/12/27 15:45:17.222] [main] - - afterAll:       []
+[INFO ] [2024/12/27 15:45:17.222] [main] - ----</code></pre>
+<p><strong>Action Tree</strong></p>
+<pre class="text"><code>[INFO ] [2024/12/27 15:45:17.248] [main] - LessonWhen          : value:      [o]performFunction
+[INFO ] [2024/12/27 15:45:17.248] [main] - LessonWhen          : value:      +-[o:0]BEGIN[performFunction]@[work-id-519303080]
+[INFO ] [2024/12/27 15:45:17.248] [main] - LessonWhen          : value:      |-+-[o:0]let[Hello!][page]
+[INFO ] [2024/12/27 15:45:17.248] [main] - LessonWhen          : value:      +-[o:0]END[performFunction]
+[INFO ] [2024/12/27 15:45:17.256] [main] - LessonWhen          : value:      [o]thenDatabaseRecordUpdated
+[INFO ] [2024/12/27 15:45:17.256] [main] - LessonWhen          : value:      +-[o:0]BEGIN[thenDatabaseRecordUpdated]@[work-id-1552400354]
+[INFO ] [2024/12/27 15:45:17.257] [main] - LessonWhen          : value:      |-+-[o:0]let[Database record updated!][page]
+[INFO ] [2024/12/27 15:45:17.257] [main] - LessonWhen          : value:      +-[o:0]END[thenDatabaseRecordUpdated]</code></pre>
+<p>When you want to run tests, you will declare the
+<code>performFunction</code> to be executed for sure. But you may forget
+mentioning the assertion part. This mechanism prevents it from
+happening.</p>
+<p>What does this rule mean, then?</p>
+<blockquote>
+<p>Implicit execution happens only when the scene mentioned by the
+<code>@When</code> is explicitly specified.</p>
+</blockquote>
+<p>Once <code>performTagetFunction</code> is defined and run as a test,
+we will need to use it as a part of a preparation (arranging) step.
+Because <code>targetFunction</code> will be reused in the
+product-side.</p>
+<p>However, in such a situation, do we want to run
+<code>thenDatabaseRecordWasUpdate</code>? No.</p>
+<p>Here is what the rule means. If <code>performTargetFunction</code> is
+mentioned in the <code>@AutotestExecution</code>, those
+<code>thenXyz</code> actions will be performed. But if it is not, in
+other words, it is mentioned by other annotations such as
+<code>@DependsOn</code> and it is executed because of it,
+<code>thenXyz</code> for it won’t be performed. Why does this make
+sense? Because if <code>performTargetFunction</code> is reused in a
+preparation step, it will be mentioned by <code>@DependsOn</code>
+annotation directly or indirectly. Not directly in
+<code>@AutotestExecution</code>. If it is directly mentioned in
+<code>@AutotestExecution</code>, the class is actually testing
+<code>performTargetFunction</code> and it will be valid to run
+<code>thenXyz</code> whose <code>@When</code> specifies
+<code>performTargetFunction</code>.</p>
+<h2 id="preparedby-fallback-dependency"><code>@PreparedBy</code>:
+“Fallback” Dependency</h2>
+<!-- @formatter: on -->
+<blockquote>
+<ol start="3" type="1">
+<li><ol start="3" type="1">
+<li>For <code>@PreparedBy</code>:
+<ol type="1">
+<li>Implicit execution happens only when it is the first
+<code>@PreparedBy</code> annotation for the scene or all the previous
+ones failed.</li>
+<li>After one sequence defined by <code>@PreparedBy</code> has succeeded
+the scene itself will be performed. If the scene succeeds, the rest
+scenes provided by <code>@PreparedBy</code> will not be performed.</li>
+<li>When the previous scene or any of <code>@PreparedBy</code> scene
+fails, the next one will be tried. If it is the last one, the entire
+scene considered failed. <!-- @formatter:on --></li>
+</ol></li>
+</ol></li>
+</ol>
+</blockquote>
+<p>When you write tests for a given system or a component, you will find
+that most of the test code consists of ” arrangement” part, which
+prepares preconditions to perform tests. After some while, the next
+thing you will realize is “arrangement” part is very time-consuming and
+in some cases you want to optimize it even if you are sacrificing
+“reliability” of tests. That is, even if you know that it is necessary
+to re-install OS, to make tests 100% flakiness-free, reliable, and
+repeatable, you cannot afford it, sometimes. This is an extreme example,
+but this happens every day. When you are testing Web-UI, after re-login
+and just moving to a homepage may cause differences in test results.
+Still, we don’t do log-out and log back in every time.</p>
+<p><code>@PreparedBy</code> is a mechanism to perform this sequence in a
+programmatic way.</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="st">&quot;performScenario&quot;</span><span class="op">,</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    planExecutionWith <span class="op">=</span> DEPENDENCY_BASED<span class="op">))</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> LessonPreparedBy <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">login</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">@PreparedBy</span><span class="op">({</span><span class="st">&quot;toHomeScreen&quot;</span><span class="op">})</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">@PreparedBy</span><span class="op">({</span><span class="st">&quot;loadLoginSession&quot;</span><span class="op">,</span> <span class="st">&quot;toHomeScreen&quot;</span><span class="op">})</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">@PreparedBy</span><span class="op">({</span><span class="st">&quot;login&quot;</span><span class="op">,</span> <span class="st">&quot;saveLoginSession&quot;</span><span class="op">})</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">isLoggedIn</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;isLoggedIn&quot;</span><span class="op">)</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">performScenario</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>  </span></code></pre></div>
+<p>This class models a test, where <code>performScenario</code> depends
+on <code>isLoggedIn</code>. <code>isLoggedIn</code> succeeds when a test
+user is actually logged in. But in modern web systems, it is becoming
+more and more expensive to log in them. For instance, you may be
+required to do MFA, etc. If it is a manual test, you would navigate to
+the home page of the system, then conduct the next test. Even if you’ve
+closed a browser tab, still the cookie may remember the session, and you
+have a chance to go to the home page without a problem. Only when you
+run out of a way to keep conducting tests, you will do the log in
+again.</p>
+<p>Following is an execution plan of the class.</p>
+<pre class="text"><code>[INFO ] [2024/12/27 16:53:17.710] [main] - ----
+[INFO ] [2024/12/27 16:53:17.710] [main] - Execution plan is as follows:
+[INFO ] [2024/12/27 16:53:17.710] [main] - - beforeAll:      [isLoggedIn]
+[INFO ] [2024/12/27 16:53:17.711] [main] - - beforeEach:     []
+[INFO ] [2024/12/27 16:53:17.711] [main] - - value:          [performScenario]
+[INFO ] [2024/12/27 16:53:17.711] [main] - - afterEach:      []
+[INFO ] [2024/12/27 16:53:17.711] [main] - - afterAll:       []
+[INFO ] [2024/12/27 16:53:17.711] [main] - ----</code></pre>
+<p>Only logged in is shown in the plan. Action tree looks as follows
+(Edited for the conciseness sake).</p>
+<pre class="text"><code>[INFO ] [2024/12/27 16:53:17.718] [main] - LessonPreparedBy    : beforeAll:  [o]isLoggedIn                                                   
+[INFO ] [2024/12/27 16:53:17.718] [main] - LessonPreparedBy    : beforeAll:  [o:0]ensure:do sequentially using
+[INFO ] [2024/12/27 16:53:17.718] [main] - LessonPreparedBy    : beforeAll:    |-+-[o:0]let[isLoggedIn][page]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    | +-[o:0]sink[page]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    +-[o:0]BEGIN[isLoggedIn]@[work-id-1636588948]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    | |-+-[o:0]let[toHomeScreen][page]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    +-[o:0]END[isLoggedIn]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    +-[]BEGIN[isLoggedIn]@[work-id-662925691]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    |-+-[]BEGIN[work-id-662925691]@[work-id-1977618945]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    | |-+-[]let[loadLoginSession][page]
+[INFO ] [2024/12/27 16:53:17.719] [main] - LessonPreparedBy    : beforeAll:    | +-[]END[work-id-662925691]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | +-[]BEGIN[work-id-662925691]@[work-id-1060519157]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | |-+-[]let[toHomeScreen][page]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | +-[]END[work-id-662925691]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | +-[]BEGIN[work-id-662925691]@[work-id-1060519157]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | |-+-[]let[login][page]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | | +-[]sink[page]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | |-+-[]let[saveLoginSession][page]
+[INFO ] [2024/12/27 16:53:17.720] [main] - LessonPreparedBy    : beforeAll:    | +-[]END[work-id-662925691]
+[INFO ] [2024/12/27 16:53:17.721] [main] - LessonPreparedBy    : beforeAll:    +-[]END[isLoggedIn]</code></pre>
+<p>Similar situation happens everywhere in testing. Unless you know data
+sets in your system, you don’t want to reload them, even if it is
+automated. Ultimately, for the reliability’s sake, it is necessary to be
+able to re-provision the entire system from the bare-metal operating
+system automatically, in theory. Yes, it is possible. However, still
+reusing the state which was prepared by other tests is necessary at the
+same time.</p>
+<p><code>@PreparedBy</code> notation and the mechanism provides a
+uniformed way achieve this.</p>
+<h2 id="closedby-resource-clean-up"><code>@ClosedBy</code>: Resource
+Clean-up</h2>
+<p>Sometimes a test consumes scarce system resources. Such resources
+sometimes require clean-ups. Database connection is just one
+example.</p>
+<!-- @formatter:off -->
+<blockquote>
+<ol start="3" type="1">
+<li><ol start="4" type="1">
+<li>For <code>@ClosedBy</code>:
+<ol type="1">
+<li>This is only valid for scenes in <code>beforeAll</code> and
+<code>beforeEach</code> stages.</li>
+<li>If a scene annotated with this in <code>beforeAll</code> stage
+succeeds, the scene specified by this annotation will be attempted in
+<code>afterAll</code> stage.</li>
+<li>If it is in <code>beforeEach</code> stage, the specified scene will
+be attempted in <code>afterEach</code> stage.
+<!-- @formatter:on --></li>
+</ol></li>
+</ol></li>
+</ol>
+</blockquote>
+<p>In the context of testing, this concern happens in arrangement step
+before actual tests. In <strong>InsDog</strong>’s execution model, it
+means they happen <code>beforeAll</code> and <code>beforeEach</code>
+stages. If a resource is allocated in <code>beforeAll</code>, it should
+be released in <code>afterAll</code>. If it is <code>beforeEach</code>,
+it should be in <code>afterEach</code>. If multiple resources are
+allocated, they should be released in the revered order.</p>
+<p>Following is a code example of the usage of <code>@ClosedBy</code>
+annotation.:</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="st">&quot;performScenario&quot;</span><span class="op">,</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    planExecutionWith <span class="op">=</span> DEPENDENCY_BASED<span class="op">))</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> LessonClosedBy <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">@ClosedBy</span><span class="op">(</span><span class="st">&quot;closeExecutionSession&quot;</span><span class="op">)</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">openExecutionSession</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;openExecutionSession&quot;</span><span class="op">)</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">closeExecutionSession</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;openExecutionSession&quot;</span><span class="op">)</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">performScenario</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The main entry point <code>performScenario</code> depends on
+<code>openExecutionSession</code>. Therefore,
+<code>openExecutionSession</code> will be executed in the
+<code>beforeAll</code> stage. As <code>openExecutionSession</code> is
+annotated with <code>@ClosedBy("closeExecutionSession")</code>, the
+<code>closeExecutionSession</code> will be performed. Since
+<code>openExecutionSession</code> is performed in
+<code>beforeAll</code>, corresponding closing operation:
+<code>closeExecutionSession</code>, will be performed in
+<code>afterAll</code><a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>. Note that
+<code>closeExecutionSession</code> will be performed unless the
+<code>openExecutionSession</code> succeeds. So, it is highly recommended
+to write the <code>openExecutionSession</code> in an “atomic” manner,
+where an operation completely succeeds, otherwise it leaves no side
+effect at all.</p>
+<p><strong>Execution Plan:</strong></p>
+<pre class="text"><code>[INFO ] [2024/12/27 17:27:13.746] [main] - ----
+[INFO ] [2024/12/27 17:27:13.746] [main] - Execution plan is as follows:
+[INFO ] [2024/12/27 17:27:13.746] [main] - - beforeAll:      [openExecutionSession]
+[INFO ] [2024/12/27 17:27:13.746] [main] - - beforeEach:     []
+[INFO ] [2024/12/27 17:27:13.746] [main] - - value:          [performScenario]
+[INFO ] [2024/12/27 17:27:13.747] [main] - - afterEach:      []
+[INFO ] [2024/12/27 17:27:13.747] [main] - - afterAll:       []
+[INFO ] [2024/12/27 17:27:13.747] [main] - ----</code></pre>
+<p><code>closeExecutionSession</code> should be executed in the
+<code>afterAll</code> stage, but it is not shown. The reason why is,
+because <code>closeExecutionSession</code> may not be executed in case
+<code>openExecutionSession</code> fails. However, this is a matter of
+design choice and this behavior may be modified in the future.</p>
+<p><strong>Action Tree (beforeAll)</strong></p>
+<p>Since <code>openExecutionSession</code> is depended on by
+<code>performScenario</code>, it is automatically executed.</p>
+<pre class="text"><code>[INFO ] [2024/12/27 17:27:13.786] [main] - LessonClosedBy      : beforeAll:  [o]openExecutionSession                                         
+[INFO ] [2024/12/27 17:27:13.786] [main] - LessonClosedBy      : beforeAll:  +-[o:0]BEGIN[openExecutionSession]@[work-id-1620459733]
+[INFO ] [2024/12/27 17:27:13.786] [main] - LessonClosedBy      : beforeAll:  |-[o:0]let[openExecutionSession][page]
+[INFO ] [2024/12/27 17:27:13.786] [main] - LessonClosedBy      : beforeAll:  +-[o:0]END[openExecutionSession]</code></pre>
+<p><strong>Action Tree (test)</strong></p>
+<p>The main scenario: <code>performScenario</code>, which is explicitly
+specified in the execution directive, is performed.</p>
+<pre class="text"><code>[INFO ] [2024/12/27 17:27:13.811] [main] - LessonClosedBy      : value:      [o]performScenario
+[INFO ] [2024/12/27 17:27:13.811] [main] - LessonClosedBy      : value:      +-[o:0]BEGIN[performScenario]@[work-id-1976166251]
+[INFO ] [2024/12/27 17:27:13.811] [main] - LessonClosedBy      : value:      |-[o:0]let[openExecutionSession][page]
+[INFO ] [2024/12/27 17:27:13.811] [main] - LessonClosedBy      : value:      +-[o:0]END[performScenario]</code></pre>
+<p><strong>Action Tree (afterAll)</strong></p>
+<p>As we saw above, <code>openExecutionSession</code> is executed in
+<code>beforeAll</code> stage, and it was successfully finished.
+<code>closeExecutionSession</code>, which is specified in
+<code>@ClosedBy</code> annotation of <code>openExecutionSession</code>,
+is executed in the <code>afterAll</code> stage.</p>
+<pre class="text"><code>[INFO ] [2024/12/27 17:27:13.820] [main] - LessonClosedBy      : afterAll:   [o]closeExecutionSession                                         
+[INFO ] [2024/12/27 17:27:13.820] [main] - LessonClosedBy      : afterAll:   +-[o:0]BEGIN[closeExecutionSession]@[work-id-435914790]
+[INFO ] [2024/12/27 17:27:13.820] [main] - LessonClosedBy      : afterAll:   |-[o:0]let[closeExecutionSession][page]
+[INFO ] [2024/12/27 17:27:13.821] [main] - LessonClosedBy      : afterAll:   +-[o:0]END[closeExecutionSession]</code></pre>
+<h2 id="footnotes">Footnotes</h2>
+<ul>
+<li></li>
+</ul>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><code>closeExecutionSession</code> is declared to be
+depending on <code>openExecutionSession</code>. This is because it needs
+to resolve the variable that holds a resource to be released. This
+design might be changed so that <code>closeExecutionSession</code>
+doesn’t require the explicit declaration of
+<code>@DependsOn("openExecutionSession")</code>.<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="software-architecture">Software Architecture</h1>
+<p>Following is a diagram that illustrates relationships between
+software components of <strong>InsDog</strong> and of external
+services.</p>
+<p>Note that some interactions in this diagram from
+<strong>SDET(app)</strong> are done not only by them but also by other
+roles.</p>
+<p><em>Logical Integration:</em></p>
+<pre class="mermaid">graph LR
+    subgraph &quot;Product&quot; 
+        SUT
+    end
+    subgraph &quot;SDEs&quot;
+        SDETapp
+        SDETfw
+        SDE
+    end
+    SDE -.-&gt;|designs and implements| autotest-tests
+    SDE -.-&gt;|designs, implements, and tests| SUT
+    SDETapp(&quot;SDET(App)&quot;)
+    SDETapp --&gt;|reads spec| SUT
+    SDETapp -.-&gt;|manually tests| SUT
+    SDETapp -.-&gt;|writes unit tests of| SUT
+    SDETapp -.-&gt;|manually invokes| gha
+    SDETapp -.-&gt;|designs and implements| autotest-tests
+    SDETapp -.-&gt;|executes locally| autotest-cli
+    SDETfw(&quot;SDET(Framework)&quot;)
+    SDETfw -.-&gt;|designs and implements| autotest-cli
+    SDETfw -.-&gt;|designs and implements| autotest-workflows
+    SDETfw -.-&gt;|designs and implements| autotest-fw
+    SDETfw -.-&gt;|refactors| autotest-tests
+    subgraph &quot;insdog&quot;
+        autotest-tests(&quot;insdog Tests&quot;)
+        autotest-fw(&quot;insdog Framework&quot;)
+        autotest-cli(&quot;CLI Tools&quot;)
+        autotest-profile(&quot;Profiles&quot;)
+        autotest-workflows(&quot;Workflows&quot;)
+        subgraph &quot;third-party libraries&quot; 
+            JUnit5
+            Playwright-Java
+        end
+    end
+    autotest-workflows -.-&gt; |invokes| autotest-cli
+    autotest-cli -.-&gt;|store execution reports| testRail
+    autotest-cli -.-&gt;|deploy and publish artifacts| ghPackages
+    autotest-cli -.-&gt;|publish documents| backstage
+    autotest-cli -.-&gt;|requests execution| autotest-fw
+    autotest-fw -.-&gt;|executes| autotest-tests
+    autotest-fw --&gt; autotest-profile
+    autotest-tests -.-&gt;|accesses| SUT
+    subgraph &quot;External Services&quot;
+        gha(&quot;GitHub Actions&quot;)
+        testRail(&quot;TestRail&quot;)
+        ghPackages(&quot;GitHub Packages&quot;)
+        backstage(&quot;Backstage&quot;)
+    end
+
+    gha -.-&gt;|triggers| autotest-cli</code></pre>
+<p><strong>CLI Tools</strong> are designed to access external services
+and implement peripheral tasks around development efforts, such as
+building executables, publishing documentations, and executing tests.
+They have in general entry-points in <strong>Makefile</strong>. (GitHub)
+<strong>Workflows</strong> are implemented to hook triggers as wrappers
+to those <strong>CLI Tools</strong> They are not supposed to access
+external services or implements complex logics by themselves. Instead,
+they should invoke <strong>CLI tools</strong> and be kept as
+light-weight as possible. Insight behind this is a fact, where workflows
+of GitHub Actions are hard to test even with helps by <code>gh</code>
+utility command, that GitHub distributes.</p>
+<p><strong>insdog Framework</strong> is a component responsible for
+executing tests defined as a part of <strong>insdog Tests</strong>
+component. The framework provides a <strong>JUnit5</strong> extension,
+which defines execution flow of tests.</p>
+<p><strong>insdog Profile</strong> is a component that abstracts
+execution environments and parameters whose values can be different
+across test runs.</p>
+<p><strong>SDET(App)</strong> are responsible for executing/implementing
+tests for <strong>SUT</strong> in an automated-fashion as much as
+possible to meet projects’ deadlines. When necessary, they will execute
+tests by manual. While <strong>SDET(Framwork)</strong> are responsible
+for making/keeping <strong>SDET(App)</strong> works efficient as much as
+possible.</p>
+<h2 id="internal">Internal</h2>
+<p>Following is a diagram more focusing on the detail of the static
+structure of the <code>insdog</code>. It is built as an executable
+assembly, which has all the necessary dependencies inside one file.</p>
+<pre class="mermaid">C4Context
+
+Person(sdetFramework, &quot;SDET(framework)&quot;)
+Rel(sdetFramework, abstractActions, &quot;Creates&quot;)
+Rel(sdetFramework, builtInActions, &quot;Creates&quot;)
+Rel(sdetFramework, extension, &quot;Creates&quot;)
+
+Person(sdetTests, &quot;SDET(App)&quot;)
+Rel(sdetTests, testClasses, &quot;Creates&quot;)
+Rel(sdetTests, junit-platform-launcher, &quot;0-a. Invokes&quot;)
+
+Person(ci, &quot;C/I system&quot;)
+Rel(ci, junit-platform-launcher, &quot;0-b. Invokes&quot;)
+
+
+Rel(junit-platform-launcher, extension, &quot;1. instantiates&quot;)
+Rel(junit-platform-launcher, testClasses, &quot;2. instantiates&quot;)
+Rel(extension, testClasses, &quot;3. executes&quot;)
+
+Boundary(insdog-assembly, &quot;insdog:assembly&quot;, &quot;application&quot;) {
+    Boundary(b0, &quot;insdog:main&quot;, &quot;library&quot;) {
+        Boundary(coreBoundary, &quot;core&quot;, &quot;package&quot;) {
+            Component(extension, &quot;JUnit 5 Test Extension&quot;)
+            Component(abstractActions, &quot;Base Action Factories&quot;)
+            Rel(builtInActions, abstractActions, &quot;implements&quot;)
+            Component(builtInActions, &quot;Built-in Action Factories&quot;)
+        }
+        Boundary(b2, &quot;tests&quot;, &quot;package&quot;) {
+            Component(testClasses, &quot;Tests&quot;)
+            Component(customActions, &quot;Custom Action Factories&quot;)
+            Rel(testClasses, customActions, &quot;Uses&quot;)
+        }
+        Rel(testClasses, builtInActions, &quot;Uses&quot;)
+    }
+    Boundary(oss, &quot;Third-party OSS Libraries&quot;) {
+        Component(junit-platform-launcher, &quot;junit-platform-launcher&quot;)
+        Component(playwrightJava, &quot;Playwright Java&quot;)
+        Rel(customActions, playwrightJava, &quot;dependsOn&quot;)
+        Rel(builtInActions, playwrightJava, &quot;dependsOn&quot;)
+    }
+
+}
+
+Boundary(platform, &quot;Platform (OS)&quot;) {
+  Component(browser, &quot;Browser&quot;)
+}
+Rel(playwrightJava, browser, &quot;accesses&quot;)</code></pre>
+<p>It is assumed that different set of people will work on each package.
+<code>tests</code> will be developed by “SDET(App)”, who are supposed to
+be assigned to a specific product/project and knowledgeable at its
+specifications and expertise in software testing. They will conduct
+manual tests when necessary to meet project requirements.</p>
+<p>The <code>core</code> will be developed by “SDET(Framework)”, who are
+knowledgeable both at general software engineering and software
+testing.</p>
+<p>In the current version (version <strong>1.0.0-SNAPSHOT</strong>),
+<code>tests</code> and <code>core</code> will be placed in the same
+library module, however, when it goes to production, they will be
+belonging to different modules and different repositories. This
+separation will be done as the product gets matured.</p>
+<h2 id="profile-mechanism">“Profile” Mechanism</h2>
+<p>This is a diagram that illustrates relationships between components
+of <strong>insdog</strong> and of external services at runtime.</p>
+<p><em>Profile Mechanism</em></p>
+<pre class="mermaid">graph TD
+    subgraph users [Users]
+        SDET
+        SDE
+    end
+
+    subgraph executors [Autotest Execution Computers]
+        subgraph &quot;GitHub Self-hosted Server&quot;
+            insdog-ghsh(&quot;insdog&quot;)
+            subgraph &quot;Profiles&quot;
+                profile-prod-ghsh(&quot;profile-prod&quot;)
+                profile-stg-ghsh(&quot;profile-stg&quot;)
+                profile-idev-ghsh(&quot;profile-idev&quot;)
+                profile-misc-ghsh(&quot;profile-misc&quot;)
+            end
+        end
+        subgraph &quot;Laptop&quot;
+            insdog-laptop(&quot;insdog&quot;)
+        end
+    end
+
+    subgraph sutHost [SUT Hosting Computers]
+        subgraph &quot;Production&quot;
+            SUT-prod(SUT)
+        end
+        subgraph &quot;Staging&quot;
+            SUT-stg(SUT)
+        end
+        subgraph &quot;idev&quot;
+            SUT-idev(SUT)
+        end
+        subgraph &quot;Misc&quot;
+            SUT-misc(SUT)
+        end
+    end
+
+    subgraph &quot;External Services&quot;
+        gha(&quot;GitHub Actions&quot;)
+        testRail(&quot;TestRail&quot;)
+        ghPackages(&quot;GitHub Packages&quot;)
+        backstage(&quot;Backstage&quot;)
+    end
+
+    SDET -.-&gt; gha
+    SDET -.-&gt; insdog-laptop
+    insdog-ghsh -.-&gt; profile-prod-ghsh
+    insdog-ghsh -.-&gt; profile-stg-ghsh
+    insdog-ghsh -.-&gt; profile-idev-ghsh
+    insdog-ghsh -.-&gt; profile-misc-ghsh
+    profile-prod-ghsh -.-&gt; SUT-prod
+    profile-stg-ghsh -.-&gt; SUT-stg
+    profile-idev-ghsh -.-&gt; SUT-idev
+    profile-misc-ghsh -.-&gt; SUT-misc
+    SUT-prod -.-&gt; testRail
+    SUT-prod -.-&gt; ghPackages
+    SUT-prod -.-&gt; backstage
+    gha -.-&gt; insdog-ghsh </code></pre>
+<p><strong>InsDog</strong> is designed to be able to run both on laptop
+computers and GitHub Self-hosted Server transparently. Its tests are
+designed to be able to target known execution environments. Differences
+between environments are abstracted by a mechanism called
+<strong>Profile</strong>. Every component in <strong>InsDog</strong>
+should be designed to be able to run against known execution
+environments, such as “production”, “staging”, or “idev”, by specifying
+a profile as a runtime parameter value passed to the CLI, without any
+single line change in the code.</p>
+<p>Thus, every component of <strong>InsDog</strong> is meant to be
+testable.</p>
+<p>More detail can be found in <a
+href="ComponentInteractions.html">Component Interactions</a></p>
+</body>
+</html>

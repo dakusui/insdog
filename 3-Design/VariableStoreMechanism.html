@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="variable-store-mechanism">Variable Store Mechanism</h1>
+<p>A <code>Scene</code> handles multiple <code>Acts</code>, each of
+which takes one input variable and ont output variable. Therefore, as a
+whole a <code>Scene</code> may handle multiple variables.</p>
+<pre class="mermaid">classDiagram
+    class Scene
+    class Act
+    namespace VariableStoreMechanism {
+        class VariableStore
+        class Variable
+    }
+    namespace Framework {
+        class SceneCall
+        class ActCall
+    }
+    namespace TestPlay {
+        class Scene
+        class Act
+    }
+
+    SceneCall ..&gt; VariableStore
+    SceneCall &quot;1&quot; --&gt; &quot;1&quot; Scene
+    SceneCall &quot;1&quot; --&gt; &quot;*&quot; ActCall
+    ActCall &quot;1&quot; --&gt; &quot;1&quot; Act
+    Scene &quot;1&quot; --&gt; &quot;*&quot; Scene
+    Scene &quot;1&quot; *--&gt; &quot;*&quot; Act
+    VariableStore &quot;1&quot; *--&gt; &quot;*&quot; Variable</code></pre>
+<p>At runtime (scene-performing time), <code>Scene</code> accesses a
+variable store. That variable store is prepared by the framework. There
+are two sorts of variables stores: one is “output variable store” and
+the other is “working variable store”. During its execution,
+<code>Scene</code> interacts only with the latter. A “working variable
+store” is composed by the framework from the exported variables of
+scenes depended on by the scene for which it is created.</p>
+<p>The framework composes a “working variable store” for a scene from
+variables exported by the scenes which the target scene depends on.</p>
+<p>Following is a sequence diagram that describes this procedure.</p>
+<pre class="mermaid">sequenceDiagram
+    Framework -&gt;&gt; Dependency Variable Stores: Read Exported Variables
+    Framework --&gt;&gt; Working Variable Store: &lt;&lt;create&gt;&gt; new Variable Store by Copying Values 
+    Framework -&gt;&gt; Scene: Play the Scene
+    Scene --&gt;&gt; Working Variable Store: Read Values of Variables
+    Scene -&gt;&gt; Acts: Play the Acts
+    Scene --&gt;&gt; Working Variable Store: Write Values of Variables
+    Framework -&gt;&gt; Working Variable Store: Read Variables
+    Framework --&gt;&gt; Output Variable Store: &lt;&lt;create&gt;&gt; new Output Variable Store by copying values from Working Variable Store </code></pre>
+<p>Note that <code>Scene</code> doesn’t play its child <code>Acts</code>
+directly but the framework takes care of it in the actual
+implementation. For the simplicity’s sake, we drew it in this way.</p>
+</body>
+</html>

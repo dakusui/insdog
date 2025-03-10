@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="what-is-insdog-a.k.a-inspektor-dog">What is InsDog (a.k.a
+Inspektor Dog) ?</h1>
+<p><strong>InsDog</strong> is an action-based test runner extension for
+JUnit written in <strong>Java</strong>. It is intended to deliver
+seamless experiences to product test developers to write tests in
+production and higher-level integration tests.</p>
+<p>Perhaps, you have already seen several unfamiliar keywords and have
+questions such as “action-based”, “higher-level integration tests”, why
+Java, as such. Let’s walk them through one-by-one.</p>
+<h2 id="developer-friendly-and-why-java">Developer Friendly and Why
+Java?</h2>
+<p>The main goal of <strong>InsDog</strong> is “Developer Friendly”
+testing framework.</p>
+<p>We don’t use an independent “DSL” for writing tests. Instead, we just
+employ a full-fledged programming language to write tests, yet providing
+“framework” so that programmers can naturally learn how to write good
+tests with minimum cost.</p>
+<p>Specifications change over time and test suites grow. Without
+conducting refactoring over test suites, they will become unmanageable
+inevitably.</p>
+<p>Test writers are able to refactor them using their familiar IDE and
+its out-of-box functionalities to refactor the source code.</p>
+<p>Not only that, we don’t want to impose developers to learn extra
+programming language. Because except for limited number of tech giants,
+corporates in the industry simply cannot afford it.</p>
+<p>Here is why the answer for “Why Java?”.</p>
+<p>Because it is one of the programming Linguae Francae. Because JVM
+runs many languages such as Python, Ruby, Scala, Kotlin, etc. Many
+languages can be compiled into JVM bytecodes.</p>
+<p>Developers can write tests in the same programming language as the
+one they write their production code.</p>
+<h2 id="action-based">Action-based?</h2>
+<p>Another main characteristics of <strong>InsDog</strong> is being
+“action-based”.</p>
+<p>When you automate tests, you realize that you want to make the same
+code serve for different purposes. For setting up test target
+applications, or for executing the test itself. Once you write a test,
+it will be a precondition of another tests. Sometimes one component
+requires other components to be installed with proper data sets. But
+obviously this will be always very expensive for significantly complex
+systems.</p>
+<p>If we want to automate it the steps reusing already written codes, it
+means the order, where such actions will be performed, needs to be
+determined at runtime. Not compile time.</p>
+<p>This is why we need to express what we are performing against the SUT
+and the execution environment as “actions”, objects which can be
+performed in a programmatic way.</p>
+<p>This delivers other benefits. Reporting and execution flexibility.
+You will be looking into how the mechanism contributes to these
+characteristics. For now, we just state that it allows us to implement
+fancy features such screen-shooting before and after a test method,
+displaying an action tree, which indicates where the failure is at
+during a test execution at a glance.</p>
+<h2 id="tests-in-higher-integration-level-and-why-it-matters">“Tests in
+Higher-Integration Level” and Why It Matters?</h2>
+<p>Tests in “Higher-Integration Level”, or Higher-Integration tests are
+terms we coined. They refer to tests executed inside a component’s
+repository using <code>failsafe</code> plugin. When we mention
+“Higher-Integration Tests”, it means tests across multiple components
+and/or multiple developers. So called “end-to-end” tests are one form of
+it.</p>
+<p>Refactoring inside one repository can be verified by unit tests or
+integration tests (in <strong>Maven</strong>’s sense).</p>
+<p>In reality, architecture level decisions need to be modified over
+time. For instance, you may want to replace a mechanism to poll another
+system/component with a more modern mechanism, where
+<strong>Kafka</strong> is employed.</p>
+<p>In this situation, multiple home-grown components interact, and they
+need to be set up beforehand. In the context of automated testing and
+continuous integration/continuous delivery, these need to happen fully
+automatically.</p>
+<p><strong>InsDog</strong> is a powerful tool to arrange and perform
+tests in such a situation because of its protocol neutral feature at the
+framework level.</p>
+<h2 id="web-ui-support">Web UI Support</h2>
+<p>Although <strong>InsDog</strong> is designed language and protocol
+neutral, it has an out-of-box support for Web UI leveraged by <a
+href="https://playwright.dev/java/docs/intro">Playwright for Java</a>.
+With that, you can start writing your own end-to-end tests quickly.</p>
+<h1 id="lets-dive">Let’s Dive!</h1>
+<p>Still it’s not clear for you? To help you understand, we wrote this
+“Lessons”. In each lesson, we try to provide working examples and their
+design background so that you can understand the concepts. Note that
+code examples and output examples are as of the time, where this
+tutorial session is being written. So, sometime, minor details can be
+different from the most recent specification and design. Also, we
+skipped methods/variables not related to essential discussions in a
+lesson for the simplicity’s sake. Refer to the package
+<code>jp.co.moneyforward.autotest.lessons</code> under
+<code>src/test/java</code>. It contains a set of example classes, which
+actually implement examples used in this session.</p>
+<p>Or if your team already uses <strong>InsDog</strong> and you just
+want to add/improve tests? That’s great! You can start working on by
+mimicking/modifying existing ones. When you come to want to understand
+<strong>InsDog</strong>’s design and do better jobs. Come back here and
+start reading, anytime.</p>
+<p>Anyways, let’s dive in!</p>
+</body>
+</html>

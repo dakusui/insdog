@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="tips">Tips</h1>
+<p>In this section, we discuss a few tips and tricks that might be
+useful.</p>
+<h2 id="accessing-model-as-an-interface">Accessing Model as an
+Interface</h2>
+<p>Also, consider defining a set of reusable <code>Scene</code>
+returning methods as an <code>interface</code>. They can be implemented
+by your <strong>TestBase</strong> class. This approach will make sense
+if your application has a structure, where a larger component consists
+of combinations of smaller ones, and smaller ones are reused by larger
+ones.</p>
+<h2 id="accessing-model-assertion-and-test-class">Accessing model,
+assertion, and test class</h2>
+<p>Ideally, “Accessing Model” represents a specification of system under
+test (SUT). We expect that an accessing model for an SUT keeps growing
+into such a model through continuous refactorings.</p>
+<p>In the ideal world, how would a test class look like? Here is an
+example.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                              value <span class="op">=</span> <span class="st">&quot;performTargetFunction1&quot;</span><span class="op">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>                  planExecutionWith <span class="op">=</span> DEPENDENCY_BASED<span class="op">))</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SutTestClass <span class="kw">extends</span> SutAccessingModel <span class="op">{</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@When</span><span class="op">(</span><span class="st">&quot;performTargetFunction&quot;</span><span class="op">)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">thenDatabaseRecordWasUpdated</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">@When</span><span class="op">(</span><span class="st">&quot;performTargetFunction&quot;</span><span class="op">)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">thenPageWasUpdated</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>As <code>SutAccessingModel</code> is a specification of the
+application itself, it doesn’t contain any assertions. It is a concern
+that should be described in the test class itself.</p>
+<p>As you see, the class is quite coherent and readable. It declares the
+target function to be tested
+(<code>value = "performTargetFunction1"</code>). Preferably the number
+of target functions should be very small or one. The method is defined
+in the class that describes the SUT’s specification.</p>
+<p>It only has methods to check the behavior of the SUT. Not methods for
+functions to be tested. Such things should go to accessing model.</p>
+<h2 id="codegen">Codegen</h2>
+<p>To write a test using the <strong>InsDog</strong>, <a
+href="https://playwright.dev/java/docs/codegen"><code>codegen</code></a>
+is a very powerful and useful friend. Please check it out and
+familiarize yourself with its way of playing DOM elements in HTMLs.</p>
+</body>
+</html>

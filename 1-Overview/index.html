@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="overview">Overview</h1>
+<p>The <strong>InspektorDog</strong> (shortened <strong>InsDog</strong>)
+is a Test Execution Library, which is:</p>
+<ul>
+<li><strong>Developer Oriented</strong></li>
+<li><strong>A thin and simple library:</strong>
+<ol type="1">
+<li>A JUnit Test Runner Extension</li>
+<li>You can use it with arbitrary clients for test development
+(HttpClient, gRPC, …)</li>
+<li>Design-wise, you can even remove Playwright and replace it with
+another browser automation solution (although, you don’t want to,
+perhaps ;) )</li>
+</ol></li>
+<li><strong>For Higher Integration Tests</strong>
+<ol type="1">
+<li>Inter-component Integration Tests</li>
+<li>End-to-end Tests</li>
+</ol></li>
+<li><strong>Action-based</strong>
+<ol type="1">
+<li>Execution Flexibility</li>
+<li>Rich Reporting</li>
+</ol></li>
+<li>and it’s <strong>Open Sourced</strong></li>
+</ul>
+<ol type="1">
+<li><strong>Written in Java, not having a separate DSL:</strong> It is
+written in Java in order to allow test-writers to access the most
+matured knowledge pool among others. Also, “correctness” and “defined
+specifications” are important in verifications and validations, which
+are what Java is excellent at.</li>
+<li><strong>No separate DSL:</strong> Introduction of a custom DSL based
+on external notations, such as CSV, JSON, YAML, Markdown, or whatsoever
+is what we do not try at this stage. We will allow users to program
+tests only in the host language, <strong>Java</strong>. Authors know
+that it will deliver stunning initial success, and it will decelerate
+very soon. This is caused by various reasons such as lack of language
+capabilities of the DSL, maintenance cost increased by it from the
+separation, overuse of syntax-sugars introduced carelessly. Instead,
+testers will be allowed to write tests using <strong>Java</strong>
+programs at this moment. They can employ all the powerful features the
+language and its ecosystem have out of the box to make their tests clean
+and stable, such as inheritance, interface, abstraction, variables,
+IntelliJ IDEA, vscode, etc. etc.</li>
+<li><strong>Action-based Programming Model:</strong> Once a test is
+written, it will be used to prepare a setting for another test. This is
+a common situation which authors have experienced. We can think of a
+test for “login”. Then, it will be used as a preparation of functions
+after login, such as search items, print a selected item, follow links
+in the screen, etc. Or perhaps, once you tried multiple functions, you
+may want to exercise them again in the revered order to ensure there is
+no strange dependency in them. When a product developer is conducting a
+refactoring, they only want to run a test step, anything before it are
+just preparations. They also want to run a test they focus on currently
+with minimum dependencies. In order to make those possible in a
+programmatic way, test writers are supposed to define what they want to
+do in a form of an object. It will be called an action, and in
+<strong>InsDog</strong>, it will be called <code>Act</code>,
+<code>Scene</code>, or <code>Action</code>, depending on the context and
+purposes they fulfil.</li>
+<li><strong>Application Neutrality:</strong> Although it is developed
+for a certain internal application in <strong>MoneyForward</strong>, it
+is designed to be able to work for other applications from the day one.
+It has a built-in support for Web application’s UI testing leveraged by
+<strong>Playwright</strong>, but it’s not limited to the area. By
+creating custom scenes and acts, you can apply it to API tests and
+others, too.</li>
+<li><strong>Separation of Tests, Accessing model:</strong> Similar to
+the neutrality for applications, it has a concept of <strong>Accessing
+Model</strong>. It is a common concern to have a “top-heavy” automated
+testing pyramid after successful attempts of testing automation. If we
+do not take any counter-measure to this situation, the test execution
+time will grow along with the product’s development. In order to address
+this challenge, <strong>InsDog</strong> has <strong>Accessing
+Model</strong> mechanism, which provides abstract representation of “how
+we (users) want to access SUT” over an accessing method, which are Web
+UI, API, CLI, Smartphone Applications, etc. What you will need to do is
+to define an Access Model for your accessing method in a way it is
+abstract enough to be implemented by other accessing methods that you
+want to include in your test suite. Based on the annotations you attach
+to the asserting functions, the tool will automatically determine which
+accessing method should be used and which asserting functions should be
+applied.</li>
+</ol>
+<p>Following are the summary of the rest of the
+<strong>InsDog</strong>’s documentations.</p>
+<p><a
+href="../2-ExamplesAndTutorials/index.html">2-ExamplesAndTutorials</a>
+collects guides about writing tests, improving the tool, introducing
+development tools. <a href="../3-Design/index.html">3-Design</a>
+Discusses <strong>InsDog</strong>’s design overview and important
+concepts. You can find the detail API reference in <a
+href="../apidocs/index.html">API Specification</a>.</p>
+<p>Enjoy!</p>
+</body>
+</html>

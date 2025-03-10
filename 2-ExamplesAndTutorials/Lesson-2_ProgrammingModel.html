@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="lesson-2-programming-model-of-insdog">Lesson-2: Programming
+Model of “InsDog”</h1>
+<p><strong>InsDog</strong> sets its own programming model, so that test
+writers can define high quality test classes in a natural way. It is
+designed to result in compilation errors rather than runtime failures,
+if a test writer fails to follow preferable design as much as possible.
+That said, knowing the design thought behind it will help you learn how
+to write tests in the model quickly.</p>
+<p>In this document, we will walk through a working example and touch up
+on important elements one by one.</p>
+<h2 id="walking-through-an-example">Walking through an example</h2>
+<p>Following is the first Test Class of <strong>InsDog</strong>.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> This test assumes the account returned by the profile is clean<span class="co">.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> That is<span class="co">:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> <span class="co">-</span> it can log in to the SUT with its password</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> <span class="co">-</span> it doesn<span class="co">&#39;</span>t have any connected banks<span class="co">.</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> Also<span class="co">,</span> the account specified by <span class="co">`</span>ExecutionProfile<span class="co">#</span>userEmail<span class="co">`</span> should be belonging to </span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> a company named <span class="co">&quot;スペシャルサンドボックス合同会社</span> <span class="co">(法人)&quot;.</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a> <span class="co">*/</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">@Tag</span><span class="op">(</span><span class="st">&quot;bank&quot;</span><span class="op">)</span>                                                          <span class="co">// (1)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">@Tag</span><span class="op">(</span><span class="st">&quot;smoke&quot;</span><span class="op">)</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>                                                   <span class="co">// (2)</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    defaultExecution <span class="op">=</span> <span class="at">@AutotestExecution</span><span class="op">.</span><span class="fu">Spec</span><span class="op">(</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        beforeAll <span class="op">=</span> <span class="op">{</span><span class="st">&quot;open&quot;</span><span class="op">},</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>        beforeEach <span class="op">=</span> <span class="op">{},</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>        value <span class="op">=</span> <span class="op">{</span><span class="st">&quot;login&quot;</span><span class="op">,</span> <span class="st">&quot;connectBank&quot;</span><span class="op">,</span> <span class="st">&quot;disconnectBank&quot;</span><span class="op">,</span> <span class="st">&quot;logout&quot;</span><span class="op">},</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>        afterEach <span class="op">=</span> <span class="op">{</span><span class="st">&quot;screenshot&quot;</span><span class="op">},</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>        afterAll <span class="op">=</span> <span class="op">{</span><span class="st">&quot;close&quot;</span><span class="op">}))</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> BankConnectingTest <span class="kw">extends</span> AppAccessingModel <span class="co">/* (3) */</span> <span class="op">{</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>In the design concept of <strong>InsDog</strong>, a test class is
+equivalent to a test scenario.</p>
+<ul>
+<li><strong>(1):</strong> “Tag”, with which you can filter test to be
+executed by CLI. See <a href="Execution.html">Execution</a> for its
+usage at runtime.</li>
+<li><strong>(2):</strong> Default Execution Directive.</li>
+</ul>
+<h3 id="access-model">Access Model</h3>
+<p><strong>Access Model</strong> is an abstraction of steps performed in
+test scenarios. It consists of <strong>Scenes</strong>, each of which
+represents a step in a test scenario. However, scenes are defined with
+their dependencies.</p>
+<p>Static methods annotated with <code>@Named</code> are considered
+scenes that can be a part of test execution directive. By
+<code>@DependsOn</code> annotation, you can specify which
+<strong>Scene</strong> needs to be performed before the scene. A
+<strong>Scene</strong> method is supposed to return <code>Scene</code>
+object, which can be built by <code>Scene.Builder</code>.</p>
+<p>Note that how to build a scene object using the builder is omitted in
+this example for the simplicity’s sake.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="im">jp</span><span class="op">.</span><span class="im">co</span><span class="op">.</span><span class="im">moneyforward</span><span class="op">.</span><span class="im">autotest</span><span class="op">.</span><span class="im">framework</span><span class="op">.</span><span class="im">action</span><span class="op">.</span><span class="im">Scene</span><span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="im">jp</span><span class="op">.</span><span class="im">co</span><span class="op">.</span><span class="im">moneyforward</span><span class="op">.</span><span class="im">autotest</span><span class="op">.</span><span class="im">framework</span><span class="op">.</span><span class="im">annotations</span><span class="op">.</span><span class="im">Export</span><span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> AppAccessingModel <span class="kw">implements</span> AutotestRunner <span class="op">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Export</span><span class="op">({</span><span class="st">&quot;browser&quot;</span><span class="op">,</span> <span class="st">&quot;window&quot;</span><span class="op">,</span> <span class="st">&quot;page&quot;</span><span class="op">})</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">openSession</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="st">&quot;browser&quot;</span><span class="op">,</span> <span class="fu">openBrowser</span><span class="op">())</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="st">&quot;window&quot;</span><span class="op">,</span> <span class="fu">openWindow</span><span class="op">())</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">,</span> <span class="fu">openPage</span><span class="op">())</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;open&quot;</span><span class="op">)</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">login</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="fu">login</span><span class="op">())</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">)</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">connectBank</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">)</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">disconnectBank</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">)</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">logout</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">)</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">screenshot</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;openSession&quot;</span><span class="op">)</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">close</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">).</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><strong>NOTE:</strong> <code>@Named</code> annotation can have a
+string <code>value</code>. The value will be treated as a name of the
+scene method with which <strong>Execution Directive</strong> references.
+By default, the name of the method will be used. This means, overloading
+scene methods require explicit <code>@Named</code> value without
+collisions.</p>
+<p><strong>NOTE:</strong> Currently the <strong>Access Model</strong>
+needs to be extended by test model, however test execution and access
+model are essentially separate concerns. For instance, you may want to
+execute the same test scenario using a different access model than Web
+UI, let’s say, public API. In such a situation, you want to change the
+access model’s behavior at execution time through runtime CLI parameter.
+This enhancement will be made in the future.</p>
+<h3 id="scene-and-act">Scene and Act</h3>
+<p>A <strong>scene</strong> consists of one or more
+<strong>acts</strong>. A <strong>scene</strong> is a minimum unit that a
+user can specify its execution at runtime. An <strong>act</strong> is a
+minimum unit that test programmers can reuse. It is suggested to create
+reusable <strong>acts</strong> (functions to create
+<strong>acts</strong>, classes that represents <strong>acts</strong>) so
+that code duplication can become minimum.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">static</span> Scene <span class="fu">disconnectBank</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                <span class="co">// (1)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="kw">new</span> <span class="fu">Navigate</span><span class="op">(</span>EXECUTION_PROFILE<span class="op">.</span><span class="fu">accountsUrl</span><span class="op">()))</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                <span class="co">// (2)</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="kw">new</span> <span class="fu">PageAct</span><span class="op">(</span><span class="st">&quot;金融機関を削除する&quot;</span><span class="op">)</span> <span class="op">{</span>            </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">@Override</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">action</span><span class="op">(</span>Page page<span class="op">,</span> ExecutionEnvironment executionEnvironment<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                      page<span class="op">.</span><span class="fu">getByRole</span><span class="op">(</span>AriaRole<span class="op">.</span><span class="fu">CELL</span><span class="op">,</span> <span class="kw">new</span> Page<span class="op">.</span><span class="fu">GetByRoleOptions</span><span class="op">().</span><span class="fu">setName</span><span class="op">(</span><span class="st">&quot;</span><span class="sc">\uF142</span><span class="st">&quot;</span><span class="op">)).</span><span class="fu">locator</span><span class="op">(</span><span class="st">&quot;a&quot;</span><span class="op">).</span><span class="fu">click</span><span class="op">();</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                      page<span class="op">.</span><span class="fu">onceDialog</span><span class="op">(</span><span class="bu">Dialog</span><span class="op">::</span>accept<span class="op">);</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                      page<span class="op">.</span><span class="fu">getByTestId</span><span class="op">(</span><span class="st">&quot;ca-client-test-account-dropdown-menu-delete-button&quot;</span><span class="op">)</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                          <span class="op">.</span><span class="fu">click</span><span class="op">();</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                    <span class="op">}</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>                  <span class="op">})</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span></code></pre></div>
+<p>You can write the implementation of the <code>action</code> method
+with a help of <a
+href="https://playwright.dev/java/docs/codegen"><code>codegen</code></a>
+tool of <strong>Playwright</strong>.</p>
+<ul>
+<li><strong>(1):</strong> An example of “preset” acts. You can find
+pre-defined acts and utilities (classes and functions) to create acts
+under <code>jp.co.moneyforward.autotest.actions.web</code> package.
+Please consider using them to define your <code>Scene</code>.</li>
+<li><strong>(2):</strong> A <strong>PageAct</strong> allows direct
+access to the <code>Page</code> object of <strong>Playwright</strong>.
+By typing <code>new PageAct("Some descriptive name") {[ENTER]</code>,
+your IDE will generate the template, and you can start writing its
+definition. In the body of the <code>action</code> method, you can just
+write ordinary <strong>Playwright-Java</strong> code. ChatGPT’s
+Playwright-Java mode is your friend, when you need to translate
+Selenium-based locators into Playwright’s flavor. It does pretty much a
+good job.</li>
+</ul>
+<p>If you use the pre-defined acts and utilities more, the log file will
+be more informative with minimum noise, automatically. However, it has
+its learning curve, so, it is suggested to start from the
+<code>new PageAct</code> approach first until you feel you get
+familiarized.</p>
+<p>Still, keeping each <code>PageAct</code> object as small as possible
+is very important. Also, try to find reusable elements in your
+<code>PageAct</code> and extract reusable methods for others!</p>
+<h3 id="execution-directive">Execution Directive</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>                                                   </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    defaultExecution <span class="op">=</span> <span class="at">@AutotestExecution</span><span class="op">.</span><span class="fu">Spec</span><span class="op">(</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        beforeAll <span class="op">=</span> <span class="op">{</span><span class="st">&quot;open&quot;</span><span class="op">},</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        beforeEach <span class="op">=</span> <span class="op">{},</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        value <span class="op">=</span> <span class="op">{</span><span class="st">&quot;login&quot;</span><span class="op">,</span> <span class="st">&quot;connectBank&quot;</span><span class="op">,</span> <span class="st">&quot;disconnectBank&quot;</span><span class="op">,</span> <span class="st">&quot;logout&quot;</span><span class="op">},</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        afterEach <span class="op">=</span> <span class="op">{</span><span class="st">&quot;screenshot&quot;</span><span class="op">},</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        afterAll <span class="op">=</span> <span class="op">{</span><span class="st">&quot;close&quot;</span><span class="op">}))</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Example <span class="op">{}</span></span></code></pre></div>
+<p>This portion defines how this test class executes which scenes.</p>
+<p>In each attribute (<code>beforeAll</code>, <code>beforeEach</code>,
+<code>value</code>, <code>afterEach</code>, and <code>afterAll</code>) ,
+you can specify the scene names (<code>@Named#value</code> or name of a
+scene method). They are executed in this order:</p>
+<ul>
+<li><code>beforeAll[0..*]</code>
+<ul>
+<li><code>beforeEach[0..*]</code>
+<ul>
+<li><code>value[0]</code></li>
+</ul></li>
+<li><code>afterEach[0..*]</code></li>
+<li><code>beforeEach[0..*]</code>
+<ul>
+<li><code>value[1]</code></li>
+</ul></li>
+<li><code>afterEach[0..*]</code></li>
+<li>…</li>
+<li><code>beforeEach[0..*]</code>
+<ul>
+<li><code>value[*]</code></li>
+</ul></li>
+<li><code>afterEach[0..*]</code></li>
+</ul></li>
+<li><code>afterAll[0..*]</code></li>
+</ul>
+<p>Note that only scenes specified in <code>value</code> are considered
+true <em>tests</em>.</p>
+<p>In general, steps to set up a test fixture should go to
+<code>beforeAll</code>, information collection for a failure analysis
+should go to <code>afterEach</code>, and clean up steps should go to
+<code>afterAll</code>. In case information collection needs a
+preparation before executing a test, you can define it in
+<code>beforeEach</code> step.</p>
+<h2
+id="where-to-define-scene-methods-in-a-test-class-or-in-access-model">Where
+to define <strong>Scene</strong> methods? In a test class, or in access
+model?</h2>
+<p>If a <strong>Scene</strong> method is obviously used only by the test
+you are about to write, it should be in the test class. If it is
+obviously used in many test classes, it should go to
+<code>YourAccessModel</code> class. But reality is always somewhere in
+between.</p>
+<p>For the time being let’s take this policy. If it is not obviously
+used by many tests, write it in your test class. Once the second user
+appears, move it to an appropriate class.</p>
+<p>Don’t worry, they are all static methods, which you can easily move
+around.</p>
+<p>// NOTE: // * act(Act)// prefer this // * add(String, Act)// when
+granular control is needed</p>
+</body>
+</html>

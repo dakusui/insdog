@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="future-works">Future Works</h1>
+<p>In this section, we discuss potential development items for the
+future. Any of them is commited to be developed as of now until a ticket
+for it is filed in the community.</p>
+<h2 id="splitting-modules">Splitting Modules</h2>
+<p>Right now, <strong>InsDog</strong> contains only one module:
+<code>insdog-all</code>, which depends on <strong>Playwright for
+Java</strong>. However, this is not necessarily always required. Only
+when you are testing web application UIs, it will be needed.</p>
+<p>In the future, we will have the following submodules on top of
+<code>insdog-all</code>, which always contains all of them.</p>
+<ul>
+<li><code>framework</code></li>
+<li><code>webui</code></li>
+</ul>
+<p>Maybe we have more modules such as <code>grpc</code>,
+<code>rest</code>, <code>python</code>, etc.</p>
+<h2 id="multi-language-support">Multi-Language Support</h2>
+<p>JVM (<strong>Java Virtual Machine</strong>) can run programs written
+in any bytecode compilable languages. So, without modifying any single
+line of codes in the framework, you can run tests written in
+<strong>Kotlin</strong>, for instance. But it will require a bit tedious
+job if we try other languages such as <strong>Python</strong> to
+abstract its language characteristics. Rather than having our users
+write adapters, it may be a good idea to bundle a helper class in
+<strong>InsDog</strong> itself.</p>
+<h2 id="api-test-support">API test support</h2>
+<p>Similar to multi-language support, users of <strong>InsDog</strong>
+can develop their own base classes and utilities for API testing for
+protocols such as <code>gRPS</code>, <code>REST</code>, etc., by
+themselves. It would be repetitive and tedious job. It will be a good
+idea to integrate basic supports for API tests of popular protocols is a
+good idea.</p>
+<h2 id="reverse-execution-mode">Reverse Execution Mode</h2>
+<p>This is the third execution mode, where actions specified by
+<code>@AutotestExecution#defaultExecution(): @Spec#value</code> is
+executed but in the reversed order unless it breaks the constraint
+defined by <code>@DependsOn</code> and <code>@When</code>.</p>
+<p>This will be useful to find bugs in the product that can be revealed
+only by the order of executions. If you are interested in the basis
+(theory) of this idea, check Chapter 10 “Sequence-Covering Arrays” of
+“Introduction to Combinatorial Testing” by D. Richard Kuhn, Raghu N.
+Kacker, and Yu Lei (CRC Press).</p>
+</body>
+</html>

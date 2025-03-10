@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1
+id="lesson-1-the-first-test-class-with-inspektor-dog-a.k.a.-insdog">Lesson
+1: The First Test Class with Inspektor Dog (a.k.a. InsDog)</h1>
+<p>Here is the first “test class” that just prints “InsDog” to the
+standard output.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">/**</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> The First Lesson<span class="co">:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a> <span class="co">*</span> <span class="co">-</span> Create the first test<span class="co">.</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a> <span class="co">*/</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>        value <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;aSceneMethod&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>        planExecutionWith <span class="op">=</span> DEPENDENCY_BASED</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">))</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Lesson1 <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">aSceneMethod</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Let<span class="op">&lt;&gt;(</span><span class="st">&quot;InsDog&quot;</span><span class="op">))</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Sink<span class="op">&lt;&gt;(</span><span class="bu">System</span><span class="op">.</span><span class="fu">out</span><span class="op">::</span>println<span class="op">))</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>If you run this class from your IDE, it will print something like
+following.</p>
+<pre class="text"><code>InsDog
+[INFO ] [2024/12/24 16:14:10.726] [main] - +-[o:0]BEGIN[aSceneMethod]@[work-id-1979055448]
+[INFO ] [2024/12/24 16:14:10.726] [main] - |-+-[o:0]let[InsDog][page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - | +-[o:0]sink[page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - +-[o:0]END[aSceneMethod]
+[INFO ] [2024/12/24 16:14:10.727] [main] - Lesson1             : value:      [o]aSceneMethod
+...
+[INFO ] [2024/12/24 16:14:10.701] [main] - - beforeEach:     []
+[INFO ] [2024/12/24 16:14:10.701] [main] - - value:          [aSceneMethod]
+[INFO ] [2024/12/24 16:14:10.701] [main] - - afterEach:      []
+[INFO ] [2024/12/24 16:14:10.701] [main] - - afterAll:       []
+[INFO ] [2024/12/24 16:14:10.701] [main] - ----</code></pre>
+<p>What does each line in this example code and output mean? We will be
+walking through it in this lesson. Enjoy!</p>
+<h2 id="the-code">The Code</h2>
+<p>Let’s begin with the class declaration. There is an annotation and
+class declaration.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>        value <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;aSceneMethod&quot;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        planExecutionWith <span class="op">=</span> DEPENDENCY_BASED</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">))</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Lesson1 <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The <code>@AutotestExecution</code> annotation tells how the test
+class should be executed. Currently, the annotation only defines the
+“default” behavior of the test class. Before digging into its full
+specification, let’s discuss what each line in the example means.</p>
+<pre class="text"><code>    defaultExecution = @Spec(
+        value = {
+            &quot;aSceneMethod&quot;
+        },
+        planExecutionWith = DEPENDENCY_BASED
+    ))</code></pre>
+<p>The <code>@Spec</code> annotation holds the information about what
+methods in the class should be executed “test methods”. In this case, a
+method named <code>aSceneMethod</code> is it. The next line:
+<code>planExecutionWith = DEPENDENCY_BASED</code>, request the framework
+that “dependencies” of methods need to be resolved. In case this
+execution mode is specified, methods depended on by
+<code>aSceneMethod</code>, it is ensured that they will be executed
+beforehand.</p>
+<p>If you don’t want the dependency resolution to happen, you can
+specify <code>planExecutionWith = PASSTHROUGH</code>[^1]. More details
+are discussed in <a href="Lesson-3_Execution">Lesson 2:
+Execution</a></p>
+<p>The class declaration (<code>Lesson1 extends LessonBase</code>) makes
+the class inherit <code>LessonBase</code>, which is defined for this
+lesson project. Based on the situations and situations of your project
+you can define the base class.</p>
+<p>Now, how the test method <code>aSceneMethod</code> looks like?</p>
+<pre class="text"><code>  @Named
+  public Scene aSceneMethod() {
+    return Scene.begin()
+                .act(new Let&lt;&gt;(&quot;InsDog&quot;))
+                .act(new Sink&lt;&gt;(System.out::println))
+                .end();
+  }</code></pre>
+<p>The conventions here are:</p>
+<ul>
+<li>Annotated with <code>@Named</code></li>
+<li>It is public</li>
+<li>No parameter</li>
+<li>It returns a <code>Scene</code></li>
+</ul>
+<p>Note that these restrictions may be relaxed in future versions.</p>
+<p>To construct a <code>Scene</code> object, you can use a builder of
+it. Such as <code>new Scene.Builder()</code> and
+<code>Scene#build()</code>. But it is recommended to use
+<code>Scene.begin()</code> and <code>Scene#end()</code> methods for code
+readability’s sake, rather than using bare builder constructor and build
+method.</p>
+<p>Similarly, to add a child to <code>Scene</code>, there are choices
+whether we use <code>add(...)</code> methods or methods with more
+meaningful names (<code>act(...)</code> and <code>scene(...)</code>).
+The answer is, prefer <code>act(...)</code> and <code>scene(...)</code>
+over <code>add(...)</code> unless there is a special reason. Because
+they will make your code more readable.</p>
+<h2 id="the-log-and-the-output">The Log and The Output</h2>
+<p>Now, time to dig in to the output of <strong>InsDog</strong>-based
+tests.</p>
+<pre class="text"><code>InsDog
+[INFO ] [2024/12/24 16:14:10.726] [main] - +-[o:0]BEGIN[aSceneMethod]@[work-id-1979055448]
+[INFO ] [2024/12/24 16:14:10.726] [main] - |-+-[o:0]let[InsDog][page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - | +-[o:0]sink[page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - +-[o:0]END[aSceneMethod]
+[INFO ] [2024/12/24 16:14:10.727] [main] - Lesson1             : value:      [o]aSceneMethod
+[INFO ] [2024/12/24 16:14:10.727] [main] - Lesson1             : value:      +-[o:0]BEGIN[aSceneMethod]@[work-id-1979055448]
+[INFO ] [2024/12/24 16:14:10.727] [main] - Lesson1             : value:      |-+-[o:0]let[InsDog][page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - Lesson1             : value:      | +-[o:0]sink[page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - Lesson1             : value:      +-[o:0]END[aSceneMethod]
+[INFO ] [2024/12/24 16:14:10.699] [main] - Running tests in: jp.co.moneyforward.autotest.lessons.Lesson1
+[INFO ] [2024/12/24 16:14:10.700] [main] - ----
+[INFO ] [2024/12/24 16:14:10.701] [main] - Execution plan is as follows:
+[INFO ] [2024/12/24 16:14:10.701] [main] - - beforeAll:      []
+[INFO ] [2024/12/24 16:14:10.701] [main] - - beforeEach:     []
+[INFO ] [2024/12/24 16:14:10.701] [main] - - value:          [aSceneMethod]
+[INFO ] [2024/12/24 16:14:10.701] [main] - - afterEach:      []
+[INFO ] [2024/12/24 16:14:10.701] [main] - - afterAll:       []
+[INFO ] [2024/12/24 16:14:10.701] [main] - ----</code></pre>
+<p>The first line is:</p>
+<pre class="text"><code>InsDog</code></pre>
+<p>This is from the line in the code:
+<code>System.out::println</code>.</p>
+<pre class="text"><code>  @Named
+  public Scene aSceneMethod() {
+    return Scene.begin()
+                .act(new Let&lt;&gt;(&quot;InsDog&quot;))             // &lt;--- (1)
+                .act(new Sink&lt;&gt;(System.out::println)) // &lt;--- (2)
+                .end();
+  }</code></pre>
+<p>The line (1) assigns a result of
+<code>new Let&lt;&gt;("InsDog")</code> to a default output variable[^2].
+The line (2) processes the current value of the default output variable
+with the method reference <code>System.out::println</code>. As the name
+suggests <code>Sink</code> doesn’t have an output. This means the
+default output variable will be cleared with <code>null</code>. Thus,
+the string <code>InsDog</code> is printed to the standard output.</p>
+<p>The next part:</p>
+<pre class="text"><code>[INFO ] [2024/12/24 16:14:10.726] [main] - +-[o:0]BEGIN[aSceneMethod]@[work-id-1979055448]
+[INFO ] [2024/12/24 16:14:10.726] [main] - |-+-[o:0]let[InsDog][page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - | +-[o:0]sink[page]
+[INFO ] [2024/12/24 16:14:10.727] [main] - +-[o:0]END[aSceneMethod]</code></pre>
+<p>This is what we call an “action tree” or an “action tree report”. At
+the end of a top level scene, which corresponds to a test method, this
+information is printed to the log.</p>
+<p>If you write a proper test, just by take a glance at the tree, you
+will be able to understand the overview about what is going on.</p>
+<pre class="text"><code>                                              +--------------------------- Symbol for success (&quot;o&quot; for ok) 
+                                              | +------------------------- duration spent for this step [sec]
+                                              | |       +----------------- output variable store name
+                                              | |       |              +-- working variable store name 
+                                              | |       |              |
+                                              V V       V              V
+[INFO ] [2024/12/24 16:14:10.726] [main] - +-[o:0]BEGIN[aSceneMethod]@[work-id-1979055448]</code></pre>
+<p>Depending on the context what will be printed will be a bit
+different.</p>
+<pre class="text"><code>
+                                                    +---------------- A name of an act.
+                                                    |            +--- A variable name the value assigned to
+                                                    |            | 
+                                                    V            V
+[INFO ] [2024/12/24 16:14:10.726] [main] - |-+-[o:0]let[InsDog][page]</code></pre>
+<p>When an error happens after 10 seconds the line will look like as
+follows:</p>
+<pre class="text"><code>                                                +------- Symbol for error (&quot;E&quot; for error)
+                                                | 
+                                                V 
+[INFO ] [2024/12/24 16:14:10.726] [main] - |-+-[E:10]let[InsDog][page]</code></pre>
+<p>``` ## Footnotes</p>
+<ul>
+<li>[^1] Currently <code>PASSTHROUGH</code> is the default. However, it
+will be changed to <code>DEPENDENCY_BASED</code>. It is encouraged to
+specify the value of <code>planExecutionWith</code> explicitly,
+always.</li>
+<li>[^2] You can explicitly specify the variable name by doing
+<code>add("newVar", new Let&lt;&gt;("InsDog"))</code> instead of
+<code>act(new Let...)</code>, when necessary.<br />
+</li>
+<li></li>
+</ul>
+</body>
+</html>

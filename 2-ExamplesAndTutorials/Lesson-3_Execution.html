@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="lesson-2-execution">Lesson 2: Execution</h1>
+<p>In <strong>InsDog</strong>, execution of a test can be controlled by
+<code>@AutotestExecution</code> annotation attached to a test class and
+by its overriding value given from the CLI.</p>
+<h2 id="the-basic-the-passthrough-mode">The Basic: The “Passthrough”
+mode</h2>
+<p>Following is the example of it.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="im">jp</span><span class="op">.</span><span class="im">co</span><span class="op">.</span><span class="im">moneyforward</span><span class="op">.</span><span class="im">autotest</span><span class="op">.</span><span class="im">framework</span><span class="op">.</span><span class="im">action</span><span class="op">.</span><span class="im">Scene</span><span class="op">;</span><span class="kw">import</span> <span class="im">jp</span><span class="op">.</span><span class="im">co</span><span class="op">.</span><span class="im">moneyforward</span><span class="op">.</span><span class="im">autotest</span><span class="op">.</span><span class="im">framework</span><span class="op">.</span><span class="im">annotations</span><span class="op">.</span><span class="im">Named</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                value <span class="op">=</span> <span class="st">&quot;aSceneMethod&quot;</span><span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>                planExecutionWith <span class="op">=</span> PASSTHROUGH</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">))</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> LessonExecution <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">aSceneMethod</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">().</span><span class="fu">act</span><span class="op">(</span><span class="st">&quot;...&quot;</span><span class="op">).</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>But there are hidden attributes: <code>beforeAll</code>,
+<code>beforeEach</code>, <code>afterEach</code>, and
+<code>afterAll</code>.</p>
+<p>If we do not omit the default values, it will be like following:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        beforeAll <span class="op">=</span> <span class="op">{},</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        beforeEach <span class="op">=</span> <span class="op">{},</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        value <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;aSceneMethod&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>        afterEach <span class="op">=</span> <span class="op">{},</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        afterAll <span class="op">=</span> <span class="op">{},</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        planExecutionWith <span class="op">=</span> PASSTHROUGH</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">))</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Lesson <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This executes a scene object returned by <code>aSceneMethod</code> as
+a test method.</p>
+<p>Basically, what they do is what you imagine by analogy from
+<strong>JUnit</strong> test annotations.</p>
+<ul>
+<li><code>beforeAll</code>: Executes scenes returned by specified
+methods before any tests and their <code>beforeEach</code> step. This
+happens only once for a test class. This stage suits for preparation
+steps of a test class.</li>
+<li><code>beforeEach</code>: Executes scenes returned by specified
+methods before each east. This stage suits for taking a screenshot to
+compare it with the one taken in <code>beforeEach</code>.</li>
+<li><code>afterEach</code>: Executes scenes returned by specified
+methods after each east. This stage also suits for taking a screen for
+debugging purpose on a test failure.</li>
+<li><code>afterAll</code>: Executes scenes returned by specified methods
+after all tests and their <code>afterEach</code>. This happens only once
+for a test class. This stage suits for closing steps of a test
+class</li>
+</ul>
+<p>If the SUT is not a GUI, it will be a good idea to collect data and
+log files in <code>afterEach</code> stage. In case, you want to download
+only log slices that contain events after the test starts, you can also
+implement a scene to record lengths of log files and put it in
+<code>beforeEach</code> stage.</p>
+<p>Here is one basic rule. What you explicitly specified is executed by
+the framework. In the passthrough mode, what you wrote is what should be
+executed and that’s it.</p>
+<p>In the next section, we will review the “Dependency-based” mode.</p>
+<h2 id="in-practice-the-dependency-based-mode">In Practice: The
+“Dependency-based” mode</h2>
+<p>In practice, actions written in a test class may have dependencies.
+One may be a precondition of another, as such.</p>
+<p>When we model SUT’s specification as code, we frequently find
+non-simple dependencies between actions performed as a part of set up
+phase.</p>
+<p>In such a situation, it will be tedious and error-prone to describe
+the same things over and over again.</p>
+<p>If we define a scene method which assumes <code>setUpMethod</code> is
+executed beforehand as follows:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@Named</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> Scene <span class="fu">sceneMethod</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>              <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Let<span class="op">&lt;&gt;(</span><span class="st">&quot;InsDog&quot;</span><span class="op">))</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>              <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Sink<span class="op">&lt;&gt;(</span><span class="bu">System</span><span class="op">.</span><span class="fu">out</span><span class="op">::</span>println<span class="op">))</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>              <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>It is not a good idea to have users write <code>beforeAll</code>
+everytime they use the method:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>        beforeAll <span class="op">=</span> <span class="st">&quot;setUpMethod&quot;</span><span class="op">,</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        value <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;sceneMethod&quot;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">},</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        planExecutionWith <span class="op">=</span> PASSTHROUGH</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">))</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Lesson <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Instead, such dependency should be automatically resolved. The
+approach <strong>InsDog</strong> takes is to let the user method be
+annotated with <code>@DependsOn</code>.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">@AutotestExecution</span><span class="op">(</span>defaultExecution <span class="op">=</span> <span class="at">@Spec</span><span class="op">(</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    value <span class="op">=</span> <span class="st">&quot;sceneMethod&quot;</span><span class="op">,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    planExecutionWith <span class="op">=</span> DEPENDENCY_BASED<span class="op">))</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Lesson <span class="kw">extends</span> LessonBase <span class="op">{</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">setUpMethod</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Let<span class="op">&lt;&gt;(</span><span class="st">&quot;InsDog&quot;</span><span class="op">))</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Sink<span class="op">&lt;&gt;(</span><span class="bu">System</span><span class="op">.</span><span class="fu">out</span><span class="op">::</span>println<span class="op">))</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">@DependsOn</span><span class="op">(</span><span class="st">&quot;setUpMethod&quot;</span><span class="op">)</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Named</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">sceneMethod</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Let<span class="op">&lt;&gt;(</span><span class="st">&quot;InsDog&quot;</span><span class="op">))</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">act</span><span class="op">(</span><span class="kw">new</span> Sink<span class="op">&lt;&gt;(</span><span class="bu">System</span><span class="op">.</span><span class="fu">out</span><span class="op">::</span>println<span class="op">))</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>                <span class="op">.</span><span class="fu">end</span><span class="op">();</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This may seem a trivial thing, however, consider that the
+<code>setUpMethod</code> may not be the only dependency of
+<code>sceneMethod</code> and the <code>sceneMethod</code> itself may
+have its own dependencies. Without having this sort of dependency
+resolution mechanism, your test suite will become easily unmanageable.
+We will have more on this in <a href="Lesson-4_Dependency">Lesson-3:
+Dependency</a> section.</p>
+</body>
+</html>

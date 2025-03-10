@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Language" content="en" />
+  <link rel="stylesheet" href="../css/apache-maven-fluido-1.7.min.css" />
+  <link rel="stylesheet" href="../css/site.css" />
+  <link rel="stylesheet" href="../css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/jquery-ui.min.css" title="Style">
+  <link rel="stylesheet" type="text/css" href="../apidocs/resource-files/stylesheet.css" title="Style">
+  <script type="text/javascript" src="../js/apache-maven-fluido-1.7.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+  <script type="text/javascript" src="../apidocs/script-files/mermaid-init.js"></script>
+</head>
+<body><h1 id="interactions-between-components-in-insdog">Interactions between
+Components in <strong>InsDog</strong></h1>
+<p>In the context of automated testing, various actions are defined and
+performed over and over again. Sometimes, as a test case itself.
+Sometimes, as a test preparation step. Many of them look similar to each
+others but slightly different from each others. This is why we need a
+good mechanism to compose a testing activity from smaller and reusable
+elements in a programmatic way.</p>
+<p>One defined action can be performed in various ways. For instance, an
+action to deploy a certain system is used for building SUT in a given
+environment, but it can also be a function to be tested. If you run it
+as a test, you want to collect information about the deployment in order
+to examine the function works as expected. Once a test fails in its set
+up phase, users want to run the phase as if it were a main part of the
+test to collect information. If users know that the tests wouldn’t fail
+and want to check the system’s quality state quickly, they want to skip
+log collections.</p>
+<p>Also, you need to make both the test report and the test code
+readable without creating repetitions at the same time. On a failure,
+users want to see what is going on without being forced to repeat
+“run-&gt;fail-&gt;fix-&gt;run-&gt;” loop. These are challenges not seen
+in product code, but only in automated testing tool’s context.</p>
+<p>To achieve such required flexibilities, <strong>InsDog</strong>
+employs the following mechanisms and design policies.</p>
+<ul>
+<li><code>Act</code>, <code>Scene</code>, and <code>Call</code>
+structure</li>
+<li>Action compilation pipeline</li>
+<li>Custom <code>JUnit5</code> extension (custom test runner) and
+annotation based programming model</li>
+</ul>
+<p>Note that code examples and class/sequence diagrams in this page are
+intended to describe the basic concepts and may be different from the
+product code in their implementation details. Thus, even if a concept is
+described as a class in diagrams in this page, it may not have a
+corresponding implementation class in the code base.</p>
+<h2 id="scenes-acts-and-test-object">Scenes, Acts, and Test object</h2>
+<p><strong>InsDog</strong> has units called <code>Act</code> and
+<code>Scene</code>, and they are essentially factories of actions. An
+<code>Act</code> is a minimal unit to define an interaction with the
+system under test (SUT). A <code>Scene</code> consists of one or more
+<code>Act</code> or <code>Scene</code>. An <code>Act</code> can have
+zero or one input variable and zero or one output variable. Input is
+read from a variable in a variable store. A variable store is owned by a
+<code>Scene</code> and an <code>Act</code> belongs to a scene.</p>
+<p>Following is a diagram that models relationships between
+<code>Act</code>, <code>Scene</code>, and
+<code>ActionFactory</code>.</p>
+<pre class="mermaid">classDiagram
+    ActionFactory &lt;|-- Scene
+    ActionFactory &lt;|-- Act
+    Scene &quot;1&quot; --&gt; &quot;*&quot; ActionFactory: children
+    TestObject &quot;1&quot; --&gt; &quot;*&quot; Scene: baseSetUp
+    TestObject &quot;1&quot; --&gt; &quot;*&quot; Scene: setUp
+    TestObject &quot;1&quot; --&gt; &quot;*&quot; Scene: main
+    TestObject &quot;1&quot; --&gt; &quot;*&quot; Scene: tearDown
+    TestObject &quot;1&quot; --&gt; &quot;*&quot; Scene: baseTearDown
+    &lt;&lt;interface&gt;&gt; Scene
+    class Scene {
+        List~ActionFactory~ children()
+    }
+    &lt;&lt;interface&gt;&gt; Act
+    class Act {
+        R perform(T input)
+    }
+</code></pre>
+<p><code>TestObject</code> is an instance of a test class. A test class
+is the entry points that of your test, and it is what you write
+from!</p>
+<p>As in many testing frameworks, you can define usual test phases;
+before all (baseSetUp), before each (setUp), test methods, after each
+(tearDown), and after all (baseTearDown).</p>
+<p>All of those are modeled as Java code in a way where programmers
+(typically SDETs) can minimize repetitions in the test code to keep the
+readability and maintainability.</p>
+<h3 id="act">Act</h3>
+<p>An <code>Act</code> models a single action executed in a test
+scenario. In the context of web-UI testing, actions such as “click”,
+“sendKey”, “waitFor”, “doubleClick”, etc. can be modeled as an
+<code>Act</code>.</p>
+<p>Following is one example of <code>Act</code>, An implementation of
+<code>Click</code> class.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> Click <span class="kw">implements</span> Act<span class="op">&lt;</span>Page<span class="op">,</span> Page<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">final</span> <span class="bu">String</span> locatorString<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="fu">Click</span><span class="op">(</span><span class="bu">String</span> locatorString<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="fu">locatorString</span> <span class="op">=</span> locatorString<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Override</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Page <span class="fu">perform</span><span class="op">(</span>Page page<span class="op">,</span> ExecutionEnvironment executionEnvironment<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    page<span class="op">.</span><span class="fu">click</span><span class="op">(</span>locatorString<span class="op">);</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> page<span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Another example is of an <code>Act</code> is <code>Value</code>. This
+class is used for assigning a specified value to a “context
+variable”.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Value<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="kw">implements</span> Act<span class="op">&lt;</span><span class="bu">Void</span><span class="op">,</span> T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">final</span> T value<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="fu">Value</span><span class="op">(</span>T value<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">this</span><span class="op">.</span><span class="fu">value</span> <span class="op">=</span> value<span class="op">;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> T <span class="fu">perform</span><span class="op">(</span><span class="bu">Void</span> value<span class="op">,</span> ExecutionEnvironment executionEnvironment<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="kw">this</span><span class="op">.</span><span class="fu">value</span><span class="op">;</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<h3 id="scene">Scene</h3>
+<p><code>Scene</code> is another unit of reusing actions in testing
+context. It can hold other <code>ActionFactories</code>(either
+<code>Act</code> or <code>Scene</code>) as its children.</p>
+<p>Following is an example to show how you can structure of a
+<code>Scene</code> through Java language.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> AutotestExample <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">// This example assumes `Playwright` and `Browser` instances are initialized in a `@BeforeAll` method and</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// disposed in an `@AfterAll` method.</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">static</span> Playwright playwright<span class="op">;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">static</span> Browser browser<span class="op">;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">@BeforeEach</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> Scene <span class="fu">login</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> Scene<span class="op">.</span><span class="fu">begin</span><span class="op">()</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                  <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">,</span> <span class="kw">new</span> <span class="fu">Value</span><span class="op">(</span>browser<span class="op">.</span><span class="fu">newPage</span><span class="op">()))</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>                  <span class="co">//                                                                                  input field name.                                                       </span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                  <span class="co">//   output field name      </span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                  <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">,</span> <span class="kw">new</span> <span class="fu">Navigate</span><span class="op">(</span><span class="st">&quot;https://app.example.com/home&quot;</span><span class="op">),</span> <span class="st">&quot;page&quot;</span><span class="op">)</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>                  <span class="op">.</span><span class="fu">add</span><span class="op">(</span><span class="st">&quot;page&quot;</span><span class="op">,</span> <span class="kw">new</span> <span class="fu">Click</span><span class="op">(</span><span class="st">&quot;a#txtbox-email&quot;</span><span class="op">),</span> <span class="st">&quot;page&quot;</span><span class="op">)</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>                  <span class="co">// ...</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>                  <span class="op">.</span><span class="fu">build</span><span class="op">();</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>As you see, you can add arbitrary children to a new scene using a
+<code>Scene.Builder</code> class’s methods. <code>Acts</code> and
+<code>Scenes</code> under a new <code>Scene</code> can communicate with
+each others through “context variables” at runtime.</p>
+<p>The <code>Builder#add(...)</code> method can take at most three
+parameters. An output field name from a child <code>ActionFactory</code>
+to be added, the child <code>ActionFactory</code>, and an input field
+name to the action factory. When the output field name or the input
+field name is omitted, a constant “default context variable name” will
+be used.</p>
+<p>To define a function with multiple parameters, we need “currying”
+mechanism, which is not supported as of now.</p>
+<h3 id="test-object">Test Object</h3>
+<p>Test Object is a concept to model the entire test, which consists of
+<code>setupAll</code>, <code>setUp</code>, <code>main</code>,
+<code>tearDown</code>, and <code>tearDownAll</code> action factories. It
+is created by the test extension of <strong>InsDog</strong> internally
+and users do not need to create it by themselves in usual use cases.</p>
+<h2 id="action-compiler-pipeline">Action Compiler Pipeline</h2>
+<p>In order to modify/decorate the execution-time behavior of actions,
+<strong>InsDog</strong> has “Action Compiler” mechanism.</p>
+<pre class="mermaid">graph LR
+    TestObject
+    TestObject --&gt; baseSetUp
+    TestObject --&gt; setUp
+    TestObject --&gt; main
+    TestObject --&gt; tearDown
+    TestObject --&gt; baseTearDown
+    AutotestExtension
+    TestClass
+    ExecutionCompiler
+    actionTrees
+    testResults(&quot;Test Report (surefire)&quot;)
+    ActionPerformer
+    Execution
+    
+    subgraph actionTrees
+        afterEach
+        tests
+        beforeEach
+        afterAll
+        beforeAll
+    end
+    ExecutionCompiler -- read --&gt; TestObject
+    ExecutionCompiler -. create .-&gt; Execution
+    Execution --&gt; beforeAll
+    Execution --&gt; beforeEach
+    Execution --&gt; tests
+    Execution --&gt; afterEach
+    Execution --&gt; afterAll
+    AutotestExtension -- 1: read annotations --&gt; TestClass
+    AutotestExtension -. 2: compose a play object .-&gt; TestObject
+    AutotestExtension -. 3: instantiate execution compiler .-&gt; ExecutionCompiler
+    AutotestExtension -- 4: request compilation --&gt; ExecutionCompiler
+    AutotestExtension -- 5: request performing action --&gt; ActionPerformer
+    ActionPerformer --&gt; actionTrees
+    ActionPerformer -.-&gt; testResults</code></pre>
+<p><code>Execution Compiler</code> compiles trees of
+<code>ActionFactories</code> into trees of actions, which can be
+performed by <code>ActionUnit</code>. By replacing a default execution
+compiler with a custom one, you can control how your test is
+executed.</p>
+<h2 id="references">References</h2>
+<ul>
+<li><a href="https://junit.org/junit5/">JUnit5</a></li>
+<li><a
+href="http://xunitpatterns.com/Four%20Phase%20Test.html">Four-Phase
+Test</a></li>
+<li><a href="https://github.com/dakusui/actionunit">actionunit</a></li>
+</ul>
+</body>
+</html>
