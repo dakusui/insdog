@@ -68,10 +68,13 @@ help:
 
 # private targets
 _site-generate:
+	@rm -fr target/site/en/*
 	@$(MVN_WITH_JAVADOC) compile site
 	@./src/build_tools/render-md-into-html.sh src/site/markdown target/site src/site/resources/html
 	@./src/build_tools/mangle-javadoc-html-files.sh target/site/en
+
 _site-clone:
 	@mkdir -p target/site
 	@git -C target/site clone --branch gh-pages --single-branch --depth 1 https://github.com/dakusui/insdog.git en
 	@git -C target/site/en checkout gh-pages
+
