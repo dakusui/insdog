@@ -1,28 +1,26 @@
 package jp.co.moneyforward.autotest.lessons;
 
-import com.github.dakusui.actionunit.core.Context;
-import com.github.dakusui.actionunit.visitors.ReportingActionPerformer;
 import jp.co.moneyforward.autotest.framework.action.Act;
+import jp.co.moneyforward.autotest.framework.action.ActUtils;
 import jp.co.moneyforward.autotest.framework.action.Scene;
 import jp.co.moneyforward.autotest.framework.annotations.*;
-import jp.co.moneyforward.autotest.framework.core.AutotestRunner;
-
-import java.util.LinkedHashMap;
+import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution.Spec;
+import jp.co.moneyforward.autotest.lessons.LessonBase;
 
 import static com.github.valid8j.pcond.forms.Printables.function;
 import static java.util.Objects.requireNonNull;
+import static jp.co.moneyforward.autotest.framework.action.ActUtils.let;
 import static jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy.DEPENDENCY_BASED;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.createContext;
 
-@AutotestExecution(defaultExecution = @AutotestExecution.Spec(
-                              value = "performTargetFunction",
-                  planExecutionWith = DEPENDENCY_BASED))
+@AutotestExecution(defaultExecution = @Spec(
+    value = "performTargetFunction",
+    planExecutionWith = DEPENDENCY_BASED))
 public class LessonVariables extends LessonBase {
   @Named
-  @Export
+  @Export("basePage") // The "basePage" variable will be available from scenes depending on this scene.
   public Scene openBasePage() {
-    return Scene.begin()
-                .add(openNewPage())
+    return Scene.begin() // If you don't specify a default variable name, "page" will be used.
+                .add("basePage", let(new Page("newPage"))) // The value is assigned to "basePage"
                 .end();
   }
   
@@ -30,21 +28,21 @@ public class LessonVariables extends LessonBase {
   @Export({"page", "childPage"})
   @DependsOn("openBasePage")
   public Scene performTargetFunction() {
-    return Scene.begin()
-                .add(clickButton1())
-                .add("childPage", openChildPage())
+    return Scene.begin("page")
+                .add("page", clickButton1(), "basePage")
+                .add("childPage", openChildPage(), "page")
                 .add(Scene.begin("childPage")
-                          .act(screenshot())
+                          .act(screenshot()) // screenshot is executed using "childPage" variable for input and output
                           .end())
                 .end();
   }
   
   @Named
-  @Export()
+  @Export() // If no variable is specified, all variables in this context will be exported.
   @When("performTargetFunction")
   public Scene thenClickButton2() {
     return Scene.begin()
-                .add(clickButton2())
+                .add("page", clickButton2(), "page")
                 .end();
   }
   
@@ -55,10 +53,6 @@ public class LessonVariables extends LessonBase {
     return Scene.begin("childPage")
                 .add(clickButton3())
                 .end();
-  }
-  
-  private Act<Object, String> openNewPage() {
-    return new Act.Let<>("newPage");
   }
   
   private Act<Object, Object> screenshot() {
@@ -84,5 +78,18 @@ public class LessonVariables extends LessonBase {
   private static Object printVariableValue(Object o) {
     System.out.println(o);
     return requireNonNull(o);
+  }
+  
+  static class Page {
+    private final String name;
+    
+    Page(String name) {
+      this.name = name;
+    }
+    
+    public String toString() {
+      return "page:[" + name + "]";
+    }
+    
   }
 }
