@@ -55,6 +55,11 @@ import static jp.co.moneyforward.autotest.framework.utils.Valid8JCliches.mapToKe
 ///
 public record TableQuery(String tableName, String columnName, List<Term> queryTerms,
                          BiFunction<List<Locator>, List<Locator>, List<Locator>> normalizer) {
+  @Override
+  public String toString() {
+    return String.format("SELECT '%s' FROM '%s' WHERE '%s'", columnName, tableName, queryTerms);
+  }
+  
   ///
   /// A method from which you can start building a query.
   /// A `Builder` class object, which holds `columnName` as a column to project to the result will be returned.
@@ -202,5 +207,4 @@ public record TableQuery(String tableName, String columnName, List<Term> queryTe
       return build();
     }
   }
-  
 }
