@@ -1,13 +1,14 @@
-package jp.co.moneyforward.autotest.framework.action;
+package jp.co.moneyforward.autotest.framework.utils;
 
 import com.microsoft.playwright.Page;
+import jp.co.moneyforward.autotest.framework.action.Act;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.isToStringOverridden;
 
-public enum ActUtils {
+public enum InsdogUtils {
     ;
 
     public static <T> Act.Let<T> let(T value) {
@@ -18,7 +19,12 @@ public enum ActUtils {
         return new Act.Func<>(isToStringOverridden(func) ? func.toString()
                                       : "func", func);
     }
-
+    
+    public static <T> Act.Sink<T> sink(Consumer<T> sink) {
+        return new Act.Sink<>(isToStringOverridden(sink) ? sink.toString()
+                                                         : "sink", sink);
+    }
+    
     public static Act.Func<Page, Page> page(Consumer<Page> action) {
         return func((Page page) -> {
             action.accept(page);
