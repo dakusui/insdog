@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static jp.co.moneyforward.autotest.framework.action.ResolverBundle.resolverBundleFor;
+import static jp.co.moneyforward.autotest.framework.action.Scene.DUMMY_OUTPUT_VARIABLE_NAME;
 
 ///
 /// A facade class of the "autotest" framework.
@@ -49,6 +50,9 @@ public enum AutotestSupport {
   
   ///
   /// Returns an `Call` object for a given `act`.
+  /// The returned call performs the `act` by passing a variable specified by `inputVariableName`.
+  /// Also, the call assigns the output of the `act` to the given `outputVariableName` except when `act` is a `Sink`.
+  /// If it is a `Sink`, it will discard it by assigning it to a dummy variable {@link Scene#DUMMY_OUTPUT_VARIABLE_NAME}.
   ///
   /// @param outputVariableName A name of an output variable, to which `act` writes its output to.
   /// @param act                An `act`, for which a call is created.
@@ -56,9 +60,11 @@ public enum AutotestSupport {
   /// @param <T>                Input type of `act`.
   /// @param <R>                Output type of `act`.
   /// @return An `ActCall` object.
-  ///
   public static <T, R> ActCall<T, R> actCall(String outputVariableName, Act<T, R> act, String inputVariableName) {
-    return new ActCall<>(outputVariableName, act, inputVariableName);
+    return new ActCall<>(!(act instanceof Act.Sink) ? outputVariableName
+                                                    : DUMMY_OUTPUT_VARIABLE_NAME,
+                         act,
+                         inputVariableName);
   }
   
   ///
