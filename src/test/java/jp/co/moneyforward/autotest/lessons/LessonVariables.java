@@ -1,15 +1,13 @@
 package jp.co.moneyforward.autotest.lessons;
 
 import jp.co.moneyforward.autotest.framework.action.Act;
-import jp.co.moneyforward.autotest.framework.action.ActUtils;
 import jp.co.moneyforward.autotest.framework.action.Scene;
 import jp.co.moneyforward.autotest.framework.annotations.*;
 import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution.Spec;
-import jp.co.moneyforward.autotest.lessons.LessonBase;
 
 import static com.github.valid8j.pcond.forms.Printables.function;
 import static java.util.Objects.requireNonNull;
-import static jp.co.moneyforward.autotest.framework.action.ActUtils.let;
+import static jp.co.moneyforward.autotest.framework.utils.InsdogUtils.let;
 import static jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy.DEPENDENCY_BASED;
 
 @AutotestExecution(defaultExecution = @Spec(
