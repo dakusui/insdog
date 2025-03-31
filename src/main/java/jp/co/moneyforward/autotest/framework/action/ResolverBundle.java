@@ -167,7 +167,7 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   }
   
   private static List<String> exportedVariablesOf(Method method) {
-    return List.of(method.getAnnotation(Export.class).value());
+    return List.of(Optional.ofNullable(method.getAnnotation(Export.class)).map(Export::value).orElse(new String[0]));
   }
   
   private static Map<String, Function<Context, Object>> resolversToMap(List<Resolver> resolvers) {
