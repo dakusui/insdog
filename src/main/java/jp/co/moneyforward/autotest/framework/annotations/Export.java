@@ -12,22 +12,32 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 ///
 /// ```java
 /// @Named
-/// @Export
+/// @Export("page")
 /// public Scene aMethod() {
-///   return Scene.perform()
-///               .acts()
-///               .object();
+///   return Scene.begin("page")
+///               .add(...)
+///               .end();
 /// }
 ///
 /// @Named
 /// @DependsOn("aMethod")
 /// public Scene bMethod() {
-///   return ...;
+///   return Scene.begin("object")
+///               .add("object", func(v -> w), "page")
+///               .end();
 /// }
 /// ```
 ///
-/// The method with this annotation can be referenced by other method (`bMethod`) using `@DependsOn` annotation.
-/// The scene in the referencing method can access fields written by a scene in referenced method (`aMethod`).
+/// The variables in the method with this annotation can be referenced by other method (in this case `bMethod`)
+/// using `@DependsOn` annotation.
+/// The scene in the referencing method can access variables specified in `@Export` annotation.
+/// By default, all variables in the referenced-side are considered specified.
+/// If an `@Export` is missing, default behavior will be performed.
+/// As a result, all variables are exported by default even if you don't use this annotation.
+///
+/// NOTE: In longer term, this annotation might be renamed because its role is "to limit" variables to be exported
+/// in practice, not "to export".
+///
 /// // @formatter:on
 ///
 @Retention(RUNTIME)
