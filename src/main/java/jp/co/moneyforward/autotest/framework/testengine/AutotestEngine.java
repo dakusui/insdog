@@ -46,8 +46,8 @@ import static java.util.stream.Collectors.toMap;
 import static jp.co.moneyforward.autotest.framework.action.ActionComposer.createActionComposer;
 import static jp.co.moneyforward.autotest.framework.action.ResolverBundle.resolverBundleFromDependenciesOf;
 import static jp.co.moneyforward.autotest.framework.testengine.AutotestEngine.Stage.*;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.composeResultMessageLine;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.reverse;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.composeResultMessageLine;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.reverse;
 
 ///
 /// The test execution engine of the **insdog**.

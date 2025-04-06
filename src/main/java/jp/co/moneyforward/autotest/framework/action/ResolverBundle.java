@@ -5,7 +5,7 @@ import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
 import jp.co.moneyforward.autotest.framework.annotations.Export;
 import jp.co.moneyforward.autotest.framework.annotations.PreparedBy;
 import jp.co.moneyforward.autotest.framework.annotations.When;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;

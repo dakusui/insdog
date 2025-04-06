@@ -4,7 +4,7 @@ import com.github.dakusui.actionunit.actions.Ensured;
 import com.github.dakusui.actionunit.core.Action;
 import com.github.dakusui.actionunit.core.Context;
 import jp.co.moneyforward.autotest.framework.core.ExecutionEnvironment;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 import static com.github.dakusui.actionunit.core.ActionSupport.*;
 import static com.github.valid8j.classic.Requires.requireNonNull;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.concat;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.concat;
 
 ///
 /// An interface that models a factory of actions.

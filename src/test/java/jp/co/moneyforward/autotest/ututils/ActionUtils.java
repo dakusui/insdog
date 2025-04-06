@@ -9,7 +9,7 @@ import jp.co.moneyforward.autotest.ut.framework.scene.SceneTest;
 
 import java.util.HashMap;
 
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.createContext;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.createContext;
 
 public enum ActionUtils {
   ;

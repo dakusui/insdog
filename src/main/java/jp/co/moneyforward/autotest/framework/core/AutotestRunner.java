@@ -6,7 +6,7 @@ import com.github.dakusui.actionunit.io.Writer;
 import com.github.dakusui.actionunit.visitors.ActionReporter;
 import com.github.dakusui.actionunit.visitors.ReportingActionPerformer;
 import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestTemplate;
 import org.slf4j.Logger;
@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.composeResultMessageLine;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.composeResultMessageLine;
 
 ///
 /// An interface that runs specified actions for stages: `beforeAll`, `beforeEach`, `tests`, `afterEach`, and `afterAll`.

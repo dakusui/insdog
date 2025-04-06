@@ -2,7 +2,7 @@ package jp.co.moneyforward.autotest.framework.action;
 
 import com.github.valid8j.pcond.forms.Printables;
 import jp.co.moneyforward.autotest.framework.core.ExecutionEnvironment;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
