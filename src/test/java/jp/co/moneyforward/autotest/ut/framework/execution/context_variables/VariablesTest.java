@@ -25,7 +25,7 @@ import static jp.co.moneyforward.autotest.ututils.ActionUtils.*;
 public class VariablesTest extends TestBase {
   public static SceneCall sceneCall(String outputFieldName, List<Call> children, List<Resolver> assignments) {
     var scene = scene(children);
-    return (SceneCall) AutotestSupport.sceneToSceneCall(scene, outputFieldName, new ResolverBundle(assignments));
+    return AutotestSupport.sceneToSceneCall(scene, outputFieldName, new ResolverBundle(assignments));
   }
   
   public static Scene scene(List<Call> children) {
