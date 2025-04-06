@@ -6,9 +6,7 @@ import jp.co.moneyforward.autotest.ut.cli.testpackage.tags.Hello2TaggedClass;
 import jp.co.moneyforward.autotest.ut.cli.testpackage.tags.NoTaggedClass;
 import jp.co.moneyforward.autotest.ututils.TestBase;
 import org.junit.jupiter.api.Test;
-import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
