@@ -17,9 +17,7 @@ public class InsdogUtilsTest {
     var resourcePath = "not/existing/image.png";
     File parentFile = File.createTempFile("test", "test").getParentFile();
     
-    AutotestException e = assertThrows(AutotestException.class, () -> {
-      InsdogUtils.materializeResource(parentFile, resourcePath);
-    });
+    AutotestException e = assertThrows(AutotestException.class, () -> InsdogUtils.materializeResource(parentFile, resourcePath));
     assertStatement(value(e).getMessage().toBe().containing(resourcePath));
   }
 }

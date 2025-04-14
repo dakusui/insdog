@@ -13,8 +13,8 @@ import java.util.LinkedHashMap;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy.DEPENDENCY_BASED;
 import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.createContext;
+import static jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy.DEPENDENCY_BASED;
 
 @AutotestExecution(
     defaultExecution = @Spec(
@@ -49,7 +49,7 @@ public class StateEnsuringTechniqueByFallingBackDependencies implements Autotest
   @DependsOn("openExecutionSession")
   public Scene toHomeScreen() {
     return sceneFromActCalls("toHome",
-                             call("page", act("goToHomeScreenByDirectlyEnteringUrl", v -> Objects.requireNonNull(v))));
+                             call("page", act("goToHomeScreenByDirectlyEnteringUrl", Objects::requireNonNull)));
   }
   
   @Named
@@ -70,7 +70,6 @@ public class StateEnsuringTechniqueByFallingBackDependencies implements Autotest
   
   /**
    * Let's not specify "logout" for login.
-   *
    * A test for log-in and log-out to be performed as expected should be a separate and independent test class.
    *
    * @return A scene that performs "login"
@@ -87,6 +86,15 @@ public class StateEnsuringTechniqueByFallingBackDependencies implements Autotest
                              call("page", act("submit", Objects::requireNonNull)));
   }
   
+  /// A method to check if a user is logged in, which is a precondition to execute `connectBank` and `disconnectBank` scenes.
+  /// Note that this method is prepared by  `toHomeScreen`, (`loadLoginSession`,`toHomeScreen`), or (`login`,`saveLoginSession`).
+  /// This means:
+  /// If the check fails, the framework will retry it after `toHomeScreen`.
+  /// If it still fails, the framework will retry it after (`loadLoginSession`,`toHomeScreen`).
+  /// If it still fails, the framework will retry it after (`login`,`saveLoginSession`).
+  /// If it still fails, the framework will give up and raise an exception.
+  ///
+  /// @return A scene to check if a user is logged in.
   @Named
   @Export("page")
   @DependsOn("openExecutionSession")
@@ -108,7 +116,7 @@ public class StateEnsuringTechniqueByFallingBackDependencies implements Autotest
   @Export("page")
   @DependsOn("isLoggedIn")
   public Scene disconnectBank() {
-    return sceneFromActCalls("disconnect", call("page", act("disconnectBankWithAppAccount", Objects::requireNonNull)));
+    return sceneFromActCalls("disconnect", call("page", act("disconnectBankWithAppAccount")));
   }
   
   @Export("page")
