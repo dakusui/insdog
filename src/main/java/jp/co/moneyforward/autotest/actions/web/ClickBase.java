@@ -3,7 +3,7 @@ package jp.co.moneyforward.autotest.actions.web;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import jp.co.moneyforward.autotest.framework.action.Act;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.util.function.Function;
 

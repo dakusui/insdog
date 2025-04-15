@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.valid8j.classic.Requires.requireNonNull;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.action;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.trivialAction;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.action;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.trivialAction;
 
 ///
 /// A class to model a "call" to a `Scene`.

@@ -12,7 +12,7 @@ import java.util.LinkedHashMap;
 import static com.github.valid8j.pcond.forms.Printables.function;
 import static java.util.Objects.requireNonNull;
 import static jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy.DEPENDENCY_BASED;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.createContext;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.createContext;
 
 @AutotestExecution(
     defaultExecution = @AutotestExecution.Spec(

@@ -1,7 +1,7 @@
 package jp.co.moneyforward.autotest.ut.framework.utils;
 
 import com.github.valid8j.fluent.Expectations;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 import jp.co.moneyforward.autotest.framework.utils.Valid8JCliches;
 import org.junit.jupiter.api.Test;
 

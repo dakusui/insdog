@@ -5,7 +5,7 @@ import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
 import jp.co.moneyforward.autotest.framework.annotations.Export;
 import jp.co.moneyforward.autotest.framework.annotations.PreparedBy;
 import jp.co.moneyforward.autotest.framework.annotations.When;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -167,7 +167,7 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   }
   
   private static List<String> exportedVariablesOf(Method method) {
-    return List.of(method.getAnnotation(Export.class).value());
+    return List.of(Optional.ofNullable(method.getAnnotation(Export.class)).map(Export::value).orElse(new String[0]));
   }
   
   private static Map<String, Function<Context, Object>> resolversToMap(List<Resolver> resolvers) {

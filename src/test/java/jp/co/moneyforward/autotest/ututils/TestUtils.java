@@ -2,7 +2,7 @@ package jp.co.moneyforward.autotest.ututils;
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserType;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.io.File;
 import java.io.OutputStream;

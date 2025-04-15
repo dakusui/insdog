@@ -1,13 +1,13 @@
 package jp.co.moneyforward.autotest.framework.action;
 
 import com.github.dakusui.actionunit.core.Action;
-import com.github.dakusui.actionunit.core.ActionSupport;
 import com.github.valid8j.pcond.fluent.Statement;
 import jp.co.moneyforward.autotest.actions.web.Value;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -16,7 +16,7 @@ import static com.github.dakusui.actionunit.core.ActionSupport.sequential;
 import static com.github.valid8j.classic.Requires.requireNonNull;
 import static java.util.Arrays.asList;
 import static jp.co.moneyforward.autotest.framework.action.AutotestSupport.*;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.simpleClassNameOf;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.simpleClassNameOf;
 
 ///
 /// An interface that represents a reusable unit of an action in **insdog**'s programming model.
@@ -32,6 +32,9 @@ public interface Scene extends WithOid {
   /// The value should be changed to a more context neutral keyword, such as `var` or `session`.
   ///
   String DEFAULT_DEFAULT_VARIABLE_NAME = "page";
+  ///
+  /// A place-holder variable name to which an output from a sink will be assigned
+  String DUMMY_OUTPUT_VARIABLE_NAME = "__DUMMY__" + UUID.randomUUID();
   
   ///
   /// // @formatter:off

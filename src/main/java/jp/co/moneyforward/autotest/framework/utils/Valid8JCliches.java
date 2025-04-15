@@ -5,6 +5,7 @@ import com.github.valid8j.pcond.fluent.Statement;
 import com.github.valid8j.pcond.forms.Predicates;
 import com.github.valid8j.pcond.forms.Printables;
 import com.github.valid8j.pcond.validator.Validator;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.util.List;
 import java.util.Map;

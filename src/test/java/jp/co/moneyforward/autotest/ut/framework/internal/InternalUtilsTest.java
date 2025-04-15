@@ -1,10 +1,10 @@
-package jp.co.moneyforward.autotest.ut.framework.utils;
+package jp.co.moneyforward.autotest.ut.framework.internal;
 
 import com.github.dakusui.actionunit.core.Action;
 import com.github.dakusui.actionunit.core.ActionSupport;
 import com.github.valid8j.pcond.forms.Printables;
 import jp.co.moneyforward.autotest.framework.core.AutotestException;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 import jp.co.moneyforward.autotest.ututils.TestBase;
 import org.junit.jupiter.api.Test;
 

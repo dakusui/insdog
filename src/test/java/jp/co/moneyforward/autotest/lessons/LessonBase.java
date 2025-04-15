@@ -6,7 +6,7 @@ import jp.co.moneyforward.autotest.framework.core.AutotestRunner;
 
 import java.util.LinkedHashMap;
 
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.createContext;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.createContext;
 
 public class LessonBase implements AutotestRunner {
   final Context context = createContext();

@@ -10,7 +10,7 @@ import jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy;
 
 import java.util.HashMap;
 
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.createContext;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.createContext;
 
 ///
 /// A test to check if the framework works as designed.

@@ -1,25 +1,45 @@
-package jp.co.moneyforward.autotest.framework.utils;
+package jp.co.moneyforward.autotest.framework.internal;
 
+import com.github.dakusui.actionunit.actions.Composite;
+import com.github.dakusui.actionunit.actions.Leaf;
 import com.github.dakusui.actionunit.core.Action;
 import com.github.dakusui.actionunit.core.Context;
+import com.github.dakusui.osynth.core.utils.MethodUtils;
+import com.github.valid8j.pcond.forms.Printables;
+import jp.co.moneyforward.autotest.framework.core.AutotestException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.opentest4j.TestAbortedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static com.github.dakusui.actionunit.core.ActionSupport.leaf;
+import static com.github.valid8j.classic.Requires.requireNonNull;
+import static com.github.dakusui.actionunit.utils.InternalUtils.toStringIfOverriddenOrNoname;
+import static com.github.valid8j.pcond.internals.InternalUtils.getMethod;
+import static java.io.File.createTempFile;
+import static java.lang.Thread.currentThread;
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static jp.co.moneyforward.autotest.actions.web.SendKey.MASK_PREFIX;
+
 ///
-/// This class is deprecated and kept only the sake for compatibility.
-/// This class will be removed in the next major version.
+/// An internal utility class of the **insdog** framework.
 ///
-@Deprecated
 public enum InternalUtils {
   ;
+  
+  public static final Logger LOGGER = LoggerFactory.getLogger(InternalUtils.class);
   
   ///
   /// Returns an `Optional` of a `String` that contains a branch name.
@@ -28,9 +48,8 @@ public enum InternalUtils {
   /// @return An `Optional` of branch name `String`.
   /// @see InternalUtils#currentBranchNameFor(File)
   ///
-  @Deprecated
   public static Optional<String> currentBranchName() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.currentBranchName();
+    return currentBranchNameFor(projectDir());
   }
   
   ///
@@ -41,44 +60,64 @@ public enum InternalUtils {
   ///
   /// @return An `Optional` of branch name `String`.
   ///
-  @Deprecated
   public static Optional<String> currentBranchNameFor(File projectDir) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.currentBranchNameFor(projectDir);
+    if (!projectDir.exists())
+      return Optional.empty();
+    
+    var builder = new FileRepositoryBuilder()
+        .setMustExist(true)
+        .findGitDir(projectDir.getAbsoluteFile())
+        .readEnvironment();
+    if (builder.getGitDir() == null)
+      return Optional.empty();
+    
+    try {
+      //NOSONAR
+      try (Repository repository = builder.build()) {
+        return Optional.of(repository.getBranch());
+      }
+    } catch (IOException e) {
+      throw wrap(e);
+    }
   }
   
-  @Deprecated
   public static boolean isPresumablyRunningFromIDE() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.isPresumablyRunningFromIDE();
+    return !isRunByTool();
   }
   
-  @Deprecated
+  private static boolean isRunByTool() {
+    return isRunByGithubActions()
+        || isRunUnderPitest()
+        || isRunUnderSurefire();
+  }
+  
+  private static boolean isRunByGithubActions() {
+    return !Objects.equals(System.getenv("GITHUB_ACTIONS"), null);
+  }
+  
   public static boolean isRunUnderSurefire() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.isRunUnderSurefire();
+    return System.getProperty("surefire.real.class.path") != null;
   }
   
-  @Deprecated
   public static boolean isRunUnderPitest() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.isRunUnderPitest();
+    return Objects.equals(System.getProperty("underpitest"), "yes");
   }
   
-  @Deprecated
   public static String composeResultMessageLine(Class<?> testClass, String stageName, String line) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.composeResultMessageLine(testClass, stageName, line);
+    return String.format("%-20s: %-11s %s", testClass.getSimpleName(), stageName + ":", line);
   }
   
-  @Deprecated
   public static File projectDir() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.projectDir();
+    return new File(".");
   }
   
-  @Deprecated
   public static String simpleClassNameOf(Class<?> clazz) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.simpleClassNameOf(clazz);
+    return MethodUtils.simpleClassNameOf(clazz);
   }
   
-  @Deprecated
   public static Stream<Action> flattenIfSequential(Action a) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.flattenIfSequential(a);
+    return a instanceof Composite composite && !composite.isParallel() ? ((Composite) a).children().stream()
+                                                                       : Stream.of(a);
   }
   
   ///
@@ -87,9 +126,8 @@ public enum InternalUtils {
   /// @param string A string to be shortened.
   /// @return A shortened string.
   ///
-  @Deprecated
   public static String shorten(String string) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.shorten(string);
+    return shorten(string, 120);
   }
   
   ///
@@ -101,24 +139,28 @@ public enum InternalUtils {
   /// @param length A length to which `string` to be shortened.
   /// @return A shortened string.
   ///
-  @Deprecated
   public static String shorten(String string, int length) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.shorten(string, length);
+    int crPos = string.indexOf('\r');
+    return string.substring(0, Math.min(length,
+                                        crPos < 0 ? string.length()
+                                                  : crPos));
   }
   
-  @Deprecated
   public static String mask(Object o) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.mask(o);
+    return Objects.toString(o).replaceAll("((" + MASK_PREFIX + ").*)", MASK_PREFIX);
   }
   
-  @Deprecated
   public static Stream<Action> flattenSequentialAction(Action action) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.flattenIfSequential(action);
+    // NOSONAR: In Java 21, there is a feature called pattern matching, where this use of switch should be encouraged.
+    return switch (action) {
+      case Composite a -> (!a.isParallel()) ? a.children().stream()
+                                            : Stream.of(a);
+      default -> Stream.of(action);
+    };
   }
   
   // NOSONAR: Intrusive warning. Number of hierarchical depth should not be checked against very well known library such as opentest4j
-  @Deprecated
-  public static class AssumptionViolation extends jp.co.moneyforward.autotest.framework.internal.InternalUtils.AssumptionViolation {
+  public static class AssumptionViolation extends TestAbortedException {
     public AssumptionViolation(String message) {
       super(message);
     }
@@ -131,9 +173,12 @@ public enum InternalUtils {
   /// @param dateString A string from which a `Date` object is created.
   /// @return A date object created from `dateString`.
   ///
-  @Deprecated
   public static Date date(String dateString) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.date(dateString);
+    try {
+      return new SimpleDateFormat("MMM/dd/yyyy", Locale.US).parse(dateString);
+    } catch (ParseException e) {
+      throw wrap(e);
+    }
   }
   
   ///
@@ -141,14 +186,12 @@ public enum InternalUtils {
   ///
   /// @return A date object created from the current date.
   ///
-  @Deprecated
   public static Date now() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.now();
+    return new Date();
   }
-
-  @Deprecated
+  
   public static String dateToSafeString(Date date) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.dateToSafeString(date);
+    return new SimpleDateFormat("HHmmss", Locale.US).format(date).replaceAll("[,. :\\-/]", "");
   }
   
   ///
@@ -159,9 +202,15 @@ public enum InternalUtils {
   /// @return Concatenated stream.
   ///
   @SafeVarargs
-  @Deprecated
   public static <T> Stream<T> concat(Stream<T>... streams) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.concat(streams);
+    if (streams.length == 0)
+      return Stream.empty();
+    if (streams.length == 1)
+      return streams[0];
+    if (streams.length == 2)
+      return Stream.concat(streams[0], streams[1]);
+    else
+      return Stream.concat(streams[0], concat(Arrays.copyOfRange(streams, 1, streams.length)));
   }
   
   ///
@@ -170,9 +219,21 @@ public enum InternalUtils {
   ///
   /// @return A created context.
   ///
-  @Deprecated
   public static Context createContext() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.createContext();
+    class InsDogContext extends Context.Impl {
+      @Override
+      public <V> V valueOf(String variableStoreName) {
+        try {
+          return super.valueOf(variableStoreName);
+        } catch (NoSuchElementException e) {
+          String message = "Variable Store: <" + variableStoreName + "> not found. ";
+          LOGGER.error(message);
+          LOGGER.debug("Caused by: <" + e.getMessage() + ">", e);
+          throw wrap(new Exception(message + ": Caused by: <" + e.getMessage() + ">"));
+        }
+      }
+    }
+    return new InsDogContext();
   }
   
   ///
@@ -182,9 +243,18 @@ public enum InternalUtils {
   /// @param consumer     A consumer from which the returned object is created.
   /// @return A consumer which executes the `accept` method of the consumer and returns `consumerName` for `toString`.
   ///
-  @Deprecated
   public static Consumer<Context> printableConsumer(final String consumerName, Consumer<Context> consumer) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.printableConsumer(consumerName, consumer);
+    return new Consumer<>() {
+      @Override
+      public void accept(Context context) {
+        consumer.accept(context);
+      }
+      
+      @Override
+      public String toString() {
+        return consumerName.replace("\n", " ");
+      }
+    };
   }
   
   ///
@@ -196,9 +266,8 @@ public enum InternalUtils {
   /// @param contextConsumer A consumer to define the behavior of the returned action.
   /// @return A leaf action created from the `contextConsumer`.
   ///
-  @Deprecated
   public static Action action(String name, Consumer<Context> contextConsumer) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.action(name, contextConsumer);
+    return leaf(printableConsumer(name, contextConsumer));
   }
   
   ///
@@ -206,9 +275,8 @@ public enum InternalUtils {
   ///
   /// @param name            A name of the action.
   /// @param contextConsumer A consumer that defines the behavior of the action.
-  @Deprecated
   public static Action trivialAction(String name, Consumer<Context> contextConsumer) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.trivialAction(name, contextConsumer);
+    return new TrivialAction(printableConsumer(name, contextConsumer));
   }
   
   ///
@@ -217,9 +285,8 @@ public enum InternalUtils {
   /// @param date The returned predicate returns `true` if a given date is after this.
   /// @return A predicate to check if a given date is after `date`.
   ///
-  @Deprecated
   public static Predicate<Date> dateAfter(Date date) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.dateAfter(date);
+    return Printables.predicate("after[" + date + "]", d -> d.after(date));
   }
   
   ///
@@ -228,9 +295,8 @@ public enum InternalUtils {
   /// @param object An object to be checked.
   /// @return `true` - `toString` method is overridden / `false` - otherwise.
   ///
-  @Deprecated
   public static boolean isToStringOverridden(Object object) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.isToStringOverridden(object);
+    return getMethod(object.getClass(), "toString").getDeclaringClass() != Object.class;
   }
   
   ///
@@ -256,7 +322,13 @@ public enum InternalUtils {
   /// @return This method will never return any value.
   ///
   public static RuntimeException wrap(Throwable e) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.wrap(e);
+    if (e instanceof RuntimeException exception) {
+      throw exception;
+    }
+    if (e instanceof Error error) {
+      throw error;
+    }
+    throw new AutotestException("Exception was cause: [" + e.getClass().getSimpleName() + "]: " + e.getMessage(), e);
   }
   
   ///
@@ -272,7 +344,15 @@ public enum InternalUtils {
   /// @param text A data to be written.
   ///
   public static void writeTo(File file, String text) {
-    jp.co.moneyforward.autotest.framework.internal.InternalUtils.writeTo(file, text);
+    try {
+      Files.createDirectories(file.getParentFile().toPath());
+      Files.writeString(file.getAbsoluteFile().toPath(),
+                        text,
+                        CREATE,
+                        APPEND);
+    } catch (IOException e) {
+      throw new AutotestException("Exception occurred while writing to file: " + file, e);
+    }
   }
   
   ///
@@ -284,19 +364,24 @@ public enum InternalUtils {
   /// @param file A file to be deleted.
   ///             Must not be `null`.
   ///
-  @Deprecated
   public static void removeFile(File file) {
-    jp.co.moneyforward.autotest.framework.internal.InternalUtils.removeFile(file);
+    try {
+      Path pathToDelete = requireNonNull(file).toPath();
+      if (pathToDelete.toFile().exists()) {
+        Files.delete(pathToDelete);
+      }
+    } catch (IOException e) {
+      throw wrap(e);
+    }
   }
   
-  @Deprecated
   public static <T> List<T> reverse(List<T> list) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.reverse(list);
+    ArrayList<T> reversed = new ArrayList<>(list);
+    Collections.reverse(reversed);
+    return reversed;
   }
   
-  @Deprecated
   public record Entry<K, V>(K key, V value) {
-    @Deprecated
     public static <K, V> Entry<K, V> $(K key, V value) {
       return new Entry<>(key, value);
     }
@@ -308,9 +393,16 @@ public enum InternalUtils {
   /// @param resourcePath A path to a resource on a class path to be materialized
   /// @return a temporary file path containing the contents of the resource
   ///
-  @Deprecated
   public static File materializeResource(String resourcePath) {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.materializeResource(resourcePath);
+    requireNonNull(resourcePath);
+    try {
+      var output = createTempFile("tmp", ".png", temporaryDirectory());
+      output.deleteOnExit();
+      materializeResource(output, resourcePath);
+      return output;
+    } catch (IOException e) {
+      throw wrap(e);
+    }
   }
   
   ///
@@ -319,25 +411,62 @@ public enum InternalUtils {
   /// @param output       The output file to which the resource contents will be written
   /// @param resourcePath A path to a resource on a class path to be materialized
   ///
-  @Deprecated
   public static void materializeResource(File output, final String resourcePath) {
-    jp.co.moneyforward.autotest.framework.internal.InternalUtils.materializeResource(output, resourcePath);
-  }
-  
-  @Deprecated
-  public static void copyTo(InputStream in1, OutputStream out1) {
-    jp.co.moneyforward.autotest.framework.internal.InternalUtils.copyTo(in1, out1);
-  }
-  
-  @Deprecated
-  public static File temporaryDirectory() {
-    return jp.co.moneyforward.autotest.framework.internal.InternalUtils.temporaryDirectory();
-  }
-  
-  @Deprecated
-  public static class TrivialAction extends jp.co.moneyforward.autotest.framework.internal.InternalUtils.TrivialAction {
-    public TrivialAction(Consumer<Context> consumer) {
-      super(consumer);
+    requireNonNull(output);
+    requireNonNull(resourcePath);
+    var fileInputStreamOptional = Optional.ofNullable(currentThread().getContextClassLoader().getResourceAsStream(resourcePath));
+    try (var fileInputStream = fileInputStreamOptional.orElseThrow(() -> new FileNotFoundException("Not found resource:<" + resourcePath + "> on the classpath"));
+         var in = new BufferedInputStream(fileInputStream);
+         var out = new BufferedOutputStream(new FileOutputStream(output))) {
+      copyTo(in, out);
+    } catch (IOException e) {
+      throw wrap(e);
     }
+  }
+  
+  public static void copyTo(InputStream in1, OutputStream out1) {
+    try (var in = in1;
+         var out = out1) {
+      while (true) {
+        byte[] bt = in.readNBytes(1024);
+        if (bt.length == 0) break;
+        out.write(bt);
+        out.flush();
+      }
+    } catch (IOException e) {
+      throw wrap(e);
+    }
+  }
+  
+  static final File TEMPORARY_DIRECTORY;
+  
+  public static File temporaryDirectory() {
+    return TEMPORARY_DIRECTORY;
+  }
+  
+  public static class TrivialAction implements Leaf {
+    final Consumer<Context> consumer;
+    
+    public TrivialAction(Consumer<Context> consumer) {
+      this.consumer = requireNonNull(consumer);
+    }
+    
+    @Override
+    public Runnable runnable(Context context) {
+      return () -> consumer.accept(context);
+    }
+    
+    @Override
+    public void formatTo(Formatter formatter, int flags, int width, int precision) {
+      formatter.format("%s", toStringIfOverriddenOrNoname(consumer));
+    }
+  }
+  
+  static {
+    File dir = new File(new File(new File(System.getProperty("user.dir")), ".dependencies"), "tmp");
+    if (dir.mkdirs()) {
+      LOGGER.debug("Created temporary directory: {}", dir);
+    }
+    TEMPORARY_DIRECTORY = dir;
   }
 }

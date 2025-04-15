@@ -2,7 +2,7 @@ package jp.co.moneyforward.autotest.framework.action;
 
 import com.github.valid8j.pcond.forms.Printables;
 import jp.co.moneyforward.autotest.framework.core.ExecutionEnvironment;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -28,6 +28,36 @@ public interface Act<T, R> {
   default String name() {
     return InternalUtils.simpleClassNameOf(this.getClass());
   }
+
+  default Act<T, R> describe(String description) {
+    return new Act<>() {
+        @Override
+        public R perform(T value, ExecutionEnvironment executionEnvironment) {
+            return Act.this.perform(value, executionEnvironment);
+        }
+
+        @Override
+        public String name() {
+            return description;
+        }
+    };
+  }
+
+  default <S> Act<T, S> andThen(Act<R, S> next) {
+    return new Act<>() {
+
+      @Override
+      public S perform(T value, ExecutionEnvironment executionEnvironment) {
+        return next.perform(Act.this.perform(value, executionEnvironment), executionEnvironment);
+      }
+
+      @Override
+      public String name() {
+        return Act.this.name() + "->" + next.name();
+      }
+    };
+  }
+
   
   static <T, R> Act<T, R> create(Function<T, R> func) {
     return new Func<>(func);
@@ -83,7 +113,7 @@ public interface Act<T, R> {
   /// @param <R> Output type
   ///
   class Func<T, R> implements Act<T, R> {
-    private final Function<T, R> main;
+    private final Function<T, R> body;
     
     ///
     /// Creates an object of this class from a given function `func`.
@@ -91,21 +121,25 @@ public interface Act<T, R> {
     /// @param func A function from which a new object is created.
     ///
     public Func(Function<T, R> func) {
-      this.main = func;
+      this.body = func;
     }
     
     public Func(String name, Function<T, R> func) {
-      this.main = Printables.function(name, func);
+      this.body = Printables.function(name, func);
     }
     
     @Override
     public R perform(T value, ExecutionEnvironment executionEnvironment) {
-      return this.main.apply(value);
+      return this.body.apply(value);
     }
-    
+
+    public Function<T, R> body() {
+      return this.body;
+    }
+
     @Override
     public String name() {
-      return InternalUtils.isToStringOverridden(this.main) ? this.main.toString()
+      return InternalUtils.isToStringOverridden(this.body) ? this.body.toString()
                                                            : "func";
     }
   }

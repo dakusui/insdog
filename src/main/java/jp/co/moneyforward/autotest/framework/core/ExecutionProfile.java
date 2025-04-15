@@ -2,7 +2,7 @@ package jp.co.moneyforward.autotest.framework.core;
 
 import com.github.dakusui.osynth.ObjectSynthesizer;
 import jp.co.moneyforward.autotest.framework.cli.CliUtils;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 import org.junit.platform.commons.support.ModifierSupport;
 
 import java.lang.annotation.Retention;

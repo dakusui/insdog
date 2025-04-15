@@ -6,7 +6,7 @@ import com.github.dakusui.actionunit.io.Writer;
 import com.github.dakusui.actionunit.visitors.ReportingActionPerformer;
 import jp.co.moneyforward.autotest.framework.action.*;
 import jp.co.moneyforward.autotest.framework.core.ExecutionEnvironment;
-import jp.co.moneyforward.autotest.framework.utils.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 import jp.co.moneyforward.autotest.ututils.ActUtils;
 import jp.co.moneyforward.autotest.ututils.TestBase;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import static jp.co.moneyforward.autotest.ututils.ActionUtils.*;
 public class VariablesTest extends TestBase {
   public static SceneCall sceneCall(String outputFieldName, List<Call> children, List<Resolver> assignments) {
     var scene = scene(children);
-    return (SceneCall) AutotestSupport.sceneToSceneCall(scene, outputFieldName, new ResolverBundle(assignments));
+    return AutotestSupport.sceneToSceneCall(scene, outputFieldName, new ResolverBundle(assignments));
   }
   
   public static Scene scene(List<Call> children) {

@@ -19,7 +19,7 @@ import java.util.List;
 import static com.github.valid8j.fluent.Expectations.*;
 import static com.github.valid8j.pcond.forms.Predicates.containsString;
 import static jp.co.moneyforward.autotest.framework.action.AutotestSupport.actCall;
-import static jp.co.moneyforward.autotest.framework.utils.InternalUtils.createContext;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.createContext;
 import static jp.co.moneyforward.autotest.ututils.ActUtils.helloAct;
 import static jp.co.moneyforward.autotest.ututils.ActUtils.let;
 import static jp.co.moneyforward.autotest.ututils.ActionUtils.createActionComposer;
