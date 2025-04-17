@@ -48,9 +48,17 @@ public class LessonVariables extends LessonBase {
   @Export()
   @When("performTargetFunction")
   public Scene thenClickButton3() {
-    return Scene.begin("childPage")
+    return Scene.begin("page")
                 .add(clickButton3())
                 .end();
+  }
+  
+  @Named
+  @Export()
+  @When("performTargetFunction")
+  public String thenClickButton4(@From("basePage") Object page) {
+    System.err.println("Hello, " + page.toString() + " !!!");
+    return page.toString();
   }
   
   private Act<Object, Object> screenshot() {
@@ -78,7 +86,7 @@ public class LessonVariables extends LessonBase {
     return requireNonNull(o);
   }
   
-  static class Page {
+  public static class Page {
     private final String name;
     
     Page(String name) {

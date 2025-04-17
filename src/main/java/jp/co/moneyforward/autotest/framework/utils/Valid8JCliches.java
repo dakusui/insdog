@@ -37,7 +37,7 @@ public enum Valid8JCliches {
                                         throw new InternalUtils.AssumptionViolation(msg);
                                       });
   }
-  
+
   public static <K, V> Function<Map<K, V>, List<K>> mapToKeyList() {
     return Printables.function("mapToKeyList", m -> m.keySet().stream().toList());
   }

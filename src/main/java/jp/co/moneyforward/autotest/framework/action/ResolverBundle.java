@@ -14,7 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static jp.co.moneyforward.autotest.framework.testengine.AutotestEngine.findMethodByName;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.findMethodByName;
 
 ///
 /// A bundle of variable resolvers.
@@ -66,7 +66,7 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   /// @return A resolver bundle for a `Scene` created by `targetMethod`.
   ///
   public static ResolverBundle resolverBundleFromDependenciesOf(Method targetMethod, Class<?> accessModelClass) {
-    assert Scene.class.isAssignableFrom(targetMethod.getReturnType());
+    //assert Scene.class.isAssignableFrom(targetMethod.getReturnType());
     return new ResolverBundle(resolversFromDependenciesOf(targetMethod, accessModelClass));
   }
   

@@ -6,6 +6,7 @@ import com.github.dakusui.actionunit.core.Action;
 import com.github.dakusui.actionunit.core.Context;
 import com.github.dakusui.osynth.core.utils.MethodUtils;
 import com.github.valid8j.pcond.forms.Printables;
+import jp.co.moneyforward.autotest.framework.annotations.Named;
 import jp.co.moneyforward.autotest.framework.core.AutotestException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
@@ -157,6 +159,34 @@ public enum InternalUtils {
                                             : Stream.of(a);
       default -> Stream.of(action);
     };
+  }
+  
+  /// Returns a "name" a given `method`.
+  /// If the method has `@Named` annotation and its value is set, the value will be returned.
+  /// If the value is equal to `Named.DEFAULT_VALUE`, the name of the method itself will be returned.
+  ///
+  /// This method should be called for a method with `@Named` annotation.
+  ///
+  /// @param m A method whose name should be returned.
+  /// @return The name of the method the framework recognizes.
+  public static String nameOf(Method m) {
+    Named annotation = m.getAnnotation(Named.class);
+    //NOSONAR
+    assert annotation != null : Objects.toString(m);
+    if (!Objects.equals(annotation.value(), Named.DEFAULT_VALUE)) return annotation.value();
+    return m.getName();
+  }
+  
+  /// Note that resolution is done based on the value of `Named` annotation first.
+  ///
+  /// @param methodName A name of a method to be found.
+  /// @param klass      A class from which a method is searched.
+  /// @return An optional containing a found method, otherwise, empty.
+  public static Optional<Method> findMethodByName(String methodName, Class<?> klass) {
+    return Arrays.stream(klass.getMethods())
+                 .filter(m -> m.isAnnotationPresent(Named.class))
+                 .filter(m -> Objects.equals(nameOf(m), methodName))
+                 .findFirst();
   }
   
   // NOSONAR: Intrusive warning. Number of hierarchical depth should not be checked against very well known library such as opentest4j
