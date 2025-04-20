@@ -18,7 +18,6 @@ import java.util.function.Supplier;
 import static com.github.valid8j.fluent.Expectations.*;
 import static jp.co.moneyforward.autotest.framework.action.AutotestSupport.actCall;
 import static jp.co.moneyforward.autotest.framework.action.AutotestSupport.retryCall;
-import static jp.co.moneyforward.autotest.framework.action.ResolverBundle.emptyResolverBundle;
 import static jp.co.moneyforward.autotest.ututils.ActUtils.*;
 import static jp.co.moneyforward.autotest.ututils.ActionUtils.*;
 
@@ -32,6 +31,13 @@ public class VariablesTest extends TestBase {
     var builder = new Scene.Builder("default");
     children.forEach(builder::addCall);
     return builder.build();
+  }
+  
+  /// Returns an empty resolver bundle.
+  ///
+  /// @return An empty resolver bundle.
+  public static ResolverBundle emptyResolverBundle() {
+    return new ResolverBundle(List.of());
   }
   
   @Test
