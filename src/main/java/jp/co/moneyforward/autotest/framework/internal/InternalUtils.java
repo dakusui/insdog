@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,8 +27,8 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.github.dakusui.actionunit.core.ActionSupport.leaf;
-import static com.github.valid8j.classic.Requires.requireNonNull;
 import static com.github.dakusui.actionunit.utils.InternalUtils.toStringIfOverriddenOrNoname;
+import static com.github.valid8j.classic.Requires.requireNonNull;
 import static com.github.valid8j.pcond.internals.InternalUtils.getMethod;
 import static java.io.File.createTempFile;
 import static java.lang.Thread.currentThread;
@@ -35,9 +36,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static jp.co.moneyforward.autotest.actions.web.SendKey.MASK_PREFIX;
 
-///
 /// An internal utility class of the **insdog** framework.
-///
 public enum InternalUtils {
   ;
   
@@ -118,7 +117,7 @@ public enum InternalUtils {
   }
   
   public static Stream<Action> flattenIfSequential(Action a) {
-    return a instanceof Composite composite && !composite.isParallel() ? ((Composite) a).children().stream()
+    return a instanceof Composite composite && !composite.isParallel() ? composite.children().stream()
                                                                        : Stream.of(a);
   }
   
@@ -352,6 +351,9 @@ public enum InternalUtils {
   /// @return This method will never return any value.
   ///
   public static RuntimeException wrap(Throwable e) {
+    if (e instanceof InvocationTargetException exception) {
+      e = exception.getTargetException();
+    }
     if (e instanceof RuntimeException exception) {
       throw exception;
     }
@@ -361,7 +363,6 @@ public enum InternalUtils {
     throw new AutotestException("Exception was detected: [" + e.getClass().getSimpleName() + "]: " + e.getMessage(), e);
   }
   
-  ///
   /// Write a given `text` to a `file`.
   /// When the `file` already exists, `text` will be appended to it.
   /// `text` will be encoded into `UTF-8` since this method calls `Files.writeString(Path,String,OpenOption...)` internally.
@@ -372,7 +373,6 @@ public enum InternalUtils {
   ///
   /// @param file A file to which `text` is written to.
   /// @param text A data to be written.
-  ///
   public static void writeTo(File file, String text) {
     try {
       Files.createDirectories(file.getParentFile().toPath());
@@ -385,15 +385,13 @@ public enum InternalUtils {
     }
   }
   
-  ///
   /// Removes a given `file`, if exists.
   /// If it doesn't exist, this method does nothing.
   /// If the `file` is a directory, it must be empty.
   /// Otherwise, an exception will be thrown.
   ///
   /// @param file A file to be deleted.
-  ///             Must not be `null`.
-  ///
+  ///                         Must not be `null`.
   public static void removeFile(File file) {
     try {
       Path pathToDelete = requireNonNull(file).toPath();
@@ -417,12 +415,10 @@ public enum InternalUtils {
     }
   }
   
-  ///
   /// Copies the contents of a resource file from the classpath to a temporary file
   ///
   /// @param resourcePath A path to a resource on a class path to be materialized
   /// @return a temporary file path containing the contents of the resource
-  ///
   public static File materializeResource(String resourcePath) {
     requireNonNull(resourcePath);
     try {
@@ -435,12 +431,10 @@ public enum InternalUtils {
     }
   }
   
-  ///
   /// Copies the contents of a resource file from the classpath to a specified output file.
   ///
   /// @param output       The output file to which the resource contents will be written
   /// @param resourcePath A path to a resource on a class path to be materialized
-  ///
   public static void materializeResource(File output, final String resourcePath) {
     requireNonNull(output);
     requireNonNull(resourcePath);
