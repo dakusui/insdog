@@ -4,16 +4,18 @@ import jp.co.moneyforward.autotest.framework.action.*;
 import jp.co.moneyforward.autotest.framework.annotations.From;
 import jp.co.moneyforward.autotest.framework.annotations.PreparedBy;
 import jp.co.moneyforward.autotest.framework.annotations.To;
+import jp.co.moneyforward.autotest.framework.core.AutotestException;
 import jp.co.moneyforward.autotest.framework.core.AutotestRunner;
 import jp.co.moneyforward.autotest.framework.exceptions.MethodInvocationException;
 import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
+import jp.co.moneyforward.autotest.framework.utils.InsdogUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.MessageFormat;
 import java.util.*;
 
-import static com.github.valid8j.fluent.Expectations.require;
-import static com.github.valid8j.fluent.Expectations.value;
+import static java.util.stream.Collectors.joining;
 import static jp.co.moneyforward.autotest.framework.action.ResolverBundle.resolverBundleFromDependenciesOf;
 import static jp.co.moneyforward.autotest.framework.action.Scene.DEFAULT_DEFAULT_VARIABLE_NAME;
 
@@ -63,45 +65,66 @@ public enum AutotestEngineUtils {
   private static Scene methodToScene(Method method, AutotestRunner runner) {
     try {
       return switch (method) {
-        case Method m when Scene.class.isAssignableFrom(m.getReturnType()) && m.getParameterCount() == 0 ->
-            methodToSceneByDirectInvocation(m, runner);
-        case Method m when !m.getReturnType().equals(void.class) && m.getParameterCount() == 1 ->
-            methodToSceneByIndirectInvocation(m, runner);
-        default -> unsupportedMethod();
+        case Method m when Scene.class.isAssignableFrom(m.getReturnType()) ->
+            methodToSceneByArrangeTimeInvocation(m, runner);
+        case Method m when !Scene.class.isAssignableFrom(m.getReturnType()) ->
+            methodToSceneByActTimeInvocation(m, runner);
+        default -> unsupportedMethod(method);
       };
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new MethodInvocationException("Failed to create a scene with: " + method, e);
     }
   }
   
-  private static Scene methodToSceneByDirectInvocation(Method method, AutotestRunner runner) throws IllegalAccessException, InvocationTargetException {
+  private static Scene methodToSceneByArrangeTimeInvocation(Method method, AutotestRunner runner) throws IllegalAccessException, InvocationTargetException {
     return (Scene) method.invoke(runner);
   }
   
-  private static Scene unsupportedMethod() {
-    throw new UnsupportedOperationException();
+  private static Scene unsupportedMethod(Method method) {
+    throw new UnsupportedOperationException(describeMethod(method));
   }
   
-  private static Scene methodToSceneByIndirectInvocation(Method method, AutotestRunner runner) {
+  private static Scene methodToSceneByActTimeInvocation(Method method, AutotestRunner runner) {
     Method m = validateMethodToDefineSceneIndirectly(method);
-    String inputVariableName = Optional.ofNullable(m.getParameterTypes()[0].getAnnotation(From.class))
+    String inputVariableName = Optional.ofNullable(m.getParameters()[0].getAnnotation(From.class))
                                        .map(From::value)
                                        .orElse(DEFAULT_DEFAULT_VARIABLE_NAME);
     String outputVariableName = Optional.ofNullable(m.getAnnotation(To.class))
                                         .map(To::value)
-                                        .orElse(inputVariableName);
+                                        .orElse(Scene.DUMMY_OUTPUT_VARIABLE_NAME);
     return Scene.begin()
                 .add(outputVariableName,
-                     new Act.Func<>(m.getName(),
-                                    (Object in) -> {
-                                      try {
-                                        return m.invoke(runner, in);
-                                      } catch (IllegalAccessException | InvocationTargetException e) {
-                                        throw InternalUtils.wrap(e);
-                                      }
-                                    }),
+                     methodToAct(runner, m),
                      inputVariableName)
                 .end();
+  }
+  
+  private static Act<?, ?> methodToAct(AutotestRunner runner, Method method) {
+    return InsdogUtils.func((Object in) -> {
+      try {
+        return method.invoke(runner, in);
+      } catch (RuntimeException e) {
+        throw new AutotestException(MessageFormat.format("Failed to execute: {0}: {1}",
+                                                         composeDescriptionFor(method, runner, in),
+                                                         e.getMessage()),
+                                    e);
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        throw InternalUtils.wrap(e);
+      }
+    });
+  }
+  
+  private static String composeDescriptionFor(Method m, AutotestRunner runner, Object in) {
+    return MessageFormat.format("Failed to invoke: {0} on: <{1}> with: <{2}>", describeMethod(m), runner, in);
+  }
+  
+  private static String describeMethod(Method m) {
+    return MessageFormat.format("{0}#{1}{2}",
+                                m.getDeclaringClass().getCanonicalName(),
+                                m.getName(),
+                                Arrays.stream(m.getParameterTypes())
+                                      .map(Class::getSimpleName)
+                                      .collect(joining(",", "(", ")")));
   }
   
   static Call methodToCall(Method method, Class<?> accessModelClass, AutotestRunner runner) {
