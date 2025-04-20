@@ -358,7 +358,7 @@ public enum InternalUtils {
     if (e instanceof Error error) {
       throw error;
     }
-    throw new AutotestException("Exception was cause: [" + e.getClass().getSimpleName() + "]: " + e.getMessage(), e);
+    throw new AutotestException("Exception was detected: [" + e.getClass().getSimpleName() + "]: " + e.getMessage(), e);
   }
   
   ///
