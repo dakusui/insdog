@@ -18,6 +18,7 @@ import java.util.*;
 import static java.util.stream.Collectors.joining;
 import static jp.co.moneyforward.autotest.framework.action.ResolverBundle.resolverBundleFromDependenciesOf;
 import static jp.co.moneyforward.autotest.framework.action.Scene.DEFAULT_DEFAULT_VARIABLE_NAME;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.wrap;
 
 public enum AutotestEngineUtils {
   ;
@@ -109,7 +110,7 @@ public enum AutotestEngineUtils {
                                                          e.getMessage()),
                                     e);
       } catch (IllegalAccessException | InvocationTargetException e) {
-        throw InternalUtils.wrap(e);
+        throw wrap(e);
       }
     });
   }
