@@ -87,7 +87,7 @@ public enum AutotestEngineUtils {
   
   private static Scene methodToSceneByActTimeInvocation(Method method, AutotestRunner runner) {
     Method m = validateMethodToDefineSceneIndirectly(method);
-    String inputVariableName = Optional.ofNullable(m.getParameters()[0].getAnnotation(From.class))
+    String inputVariableName = Optional.ofNullable(m.getParameterCount() > 0 ? m.getParameters()[0].getAnnotation(From.class) : null)
                                        .map(From::value)
                                        .orElse(DEFAULT_DEFAULT_VARIABLE_NAME);
     String outputVariableName = Optional.ofNullable(m.getAnnotation(To.class))
@@ -103,7 +103,7 @@ public enum AutotestEngineUtils {
   private static Act<?, ?> methodToAct(AutotestRunner runner, Method method) {
     return InsdogUtils.func((Object in) -> {
       try {
-        return method.invoke(runner, in);
+        return method.invoke(runner, composeArgsFor(method, in));
       } catch (RuntimeException e) {
         throw new AutotestException(MessageFormat.format("Failed to execute: {0}: {1}",
                                                          composeDescriptionFor(method, runner, in),
@@ -112,7 +112,16 @@ public enum AutotestEngineUtils {
       } catch (IllegalAccessException | InvocationTargetException e) {
         throw wrap(e);
       }
-    });
+    }).describe(method.getName());
+  }
+  
+  private static Object[] composeArgsFor(Method method, Object in) {
+    if (method.getParameterCount() == 1) {
+      return new Object[]{in};
+    } else if (method.getParameterCount() == 0) {
+      return new Object[0];
+    }
+    throw new UnsupportedOperationException(composeDescriptionFor(method, null, in));
   }
   
   private static String composeDescriptionFor(Method m, AutotestRunner runner, Object in) {
