@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 import static com.github.dakusui.actionunit.core.ActionSupport.*;
 import static com.github.valid8j.classic.Requires.requireNonNull;
 import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.concat;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.wrap;
 
 /// An interface that models a factory of actions.
 ///
@@ -140,7 +141,8 @@ public interface ActionComposer {
                                                                                                    workingVariableStore.get(k)))
                                                                     .toList()));
         
-        throw new AutotestException(message + ":[" + e.getMessage() + "]", e);
+        LOGGER.error(e.getMessage());
+        throw wrap(e);
       } finally {
         LOGGER.debug("LEAVING:  {}:{}", targetSceneName, actName);
       }
