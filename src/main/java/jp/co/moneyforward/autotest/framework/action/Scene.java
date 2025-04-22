@@ -268,7 +268,7 @@ public interface Scene extends WithOid {
     /// @return This object.
     ///
     public final <T, R> Builder add(Act<T, R> act) {
-      return this.add(defaultVariableName(), act, defaultVariableName());
+      return this.act(act);
     }
     
     ///
@@ -281,7 +281,7 @@ public interface Scene extends WithOid {
     /// @return This object
     ///
     public final <T, R> Builder act(Act<T, R> act) {
-      return this.add(defaultVariableName(), act, defaultVariableName());
+      return this.add(outputVariableNameFor(act), act, defaultVariableName());
     }
     
     ///
@@ -509,6 +509,13 @@ public interface Scene extends WithOid {
     @Override
     public String oid() {
       return "id-" + System.identityHashCode(this);
+    }
+    
+    private String outputVariableNameFor(Act<?, ?> act) {
+      if (act instanceof Act.Sink<?>) {
+        return DUMMY_OUTPUT_VARIABLE_NAME;
+      }
+      return defaultVariableName();
     }
     
     private String defaultVariableName() {
