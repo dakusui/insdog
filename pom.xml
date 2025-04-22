@@ -704,10 +704,21 @@
     </reporting>
 
     <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus snapshot repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>github-mavenpkg</id>
-            <url>https://maven.pkg.github.com/moneyforward/mavenpkg</url>
+            <id>sonatype-nexus-staging</id>
+            <name>Sonatype Nexus release repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
+            </url>
         </repository>
+        <site>
+            <id>${project.name}</id>
+            <url>file:///${user.dir}/target/site-staging</url>
+        </site>
     </distributionManagement>
 
     <profiles>
