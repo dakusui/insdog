@@ -4,19 +4,19 @@
     <artifactId>insdog-all</artifactId>
     <packaging>jar</packaging>
 
-    <version>0.5.0</version>
+    <version>0.4.8-SNAPSHOT</version>
     <description>An action-based testing framework and library</description>
 
     <name>insdog</name>
     <url>http://moneyforward.github.io/${project.name}</url>
 
     <scm>
-        <connection>scm:git:git@github.com/dakusui/${project.name}.git
+        <connection>scm:git:git@github.com/moneyforward/${project.name}.git
         </connection>
-        <developerConnection>scm:git:git@github.com:dakusui/${project.name}.git
+        <developerConnection>scm:git:git@github.com:moneyforward/${project.name}.git
         </developerConnection>
-        <url>http://dakusui.github.io/${project.name}</url>
-        <tag>insdog-all-0.5.0</tag>
+        <url>http://moneyforward.github.io/${project.name}</url>
+        <tag>${project.name}-${project.version}</tag>
     </scm>
 
     <licenses>
