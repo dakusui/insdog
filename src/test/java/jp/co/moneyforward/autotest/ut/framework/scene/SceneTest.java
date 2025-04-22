@@ -54,7 +54,7 @@ public class SceneTest extends TestBase {
     ActionUtils.performAction(createActionComposer().create(sceneCall), createWriter(out));
     Assumptions.assumeFalse(false);
     assertStatement(value(out).toBe()
-                              .containingElementsInOrder(List.of(containsString("output:"),
+                              .containingElementsInOrder(List.of(containsString("variables:[in]"),
                                                                  containsString("END"))));
   }
   
@@ -72,9 +72,7 @@ public class SceneTest extends TestBase {
                               context,
                               createWriter(out));
     assertAll(value(out).toBe()
-                        .containingElementsInOrder(List.of(containsString("output:")
-                                                               .and(containsString("work-id-"))
-                                                               .and(containsString("work:")),
+                        .containingElementsInOrder(List.of(containsString("variables:[in]"),
                                                            containsString("helloAct[in]"))),
               value(context).invoke("valueOf", "OUT")
                             .invoke("get", "out")
@@ -101,9 +99,9 @@ public class SceneTest extends TestBase {
                               createWriter(out));
     
     assertAll(value(out).toBe()
-                        .containingElementsInOrder(List.of(containsString("output:")
-                                                               .and(containsString("work-id-"))
-                                                               .and(containsString("work:")),
+                        .containingElementsInOrder(List.of(containsString("variables:[")
+                                                               .and(containsString("in"))
+                                                               .and(containsString("]")),
                                                            containsString("helloAct[in]"))),
               value(context).invoke("valueOf", "OUT")
                             .invoke("get", "out")
@@ -133,9 +131,9 @@ public class SceneTest extends TestBase {
                               createWriter(out));
     
     assertAll(value(out).toBe()
-                        .containingElementsInOrder(List.of(containsString("output:"),
-                                                           containsString("work:"),
-                                                           containsString("helloAct[in]"))),
+                        .containingElementsInOrder(List.of(containsString("variables:["),
+                                                           containsString("in"),
+                                                           containsString("]"))),
               value(context).invoke("valueOf", "OUT")
                             .invoke("get", "out")
                             .asString()
@@ -159,9 +157,9 @@ public class SceneTest extends TestBase {
                               createWriter(out));
     
     assertAll(value(out).toBe()
-                        .containingElementsInOrder(List.of(containsString("output:")
-                                                               .and(containsString("work-id-"))
-                                                               .and(containsString("work:")),
+                        .containingElementsInOrder(List.of(containsString("variables:[")
+                                                               .and(containsString("in"))
+                                                               .and(containsString("]")),
                                                            containsString("helloAct"))),
               value(context).invoke("valueOf", "OUT")
                             .invoke("get", "out")
@@ -187,9 +185,9 @@ public class SceneTest extends TestBase {
                               createWriter(out));
     
     assertAll(value(out).toBe()
-                        .containingElementsInOrder(List.of(containsString("output:")
-                                                               .and(containsString("work-id-"))
-                                                               .and(containsString("work:")),
+                        .containingElementsInOrder(List.of(containsString("variables:[")
+                                                               .and(containsString("in"))
+                                                               .and(containsString("]")),
                                                            containsString("helloAct"))),
               value(context).invoke("valueOf", "OUT")
                             .invoke("get", "in")
@@ -212,9 +210,8 @@ public class SceneTest extends TestBase {
                                                                                              new ResolverBundle(List.of()))),
                               createWriter(out));
     assertStatement(value(out).toBe()
-                              .containingElementsInOrder(List.of(containsString("output:")
-                                                                     .and(containsString("work-id-"))
-                                                                     .and(containsString("work:")),
+                              .containingElementsInOrder(List.of(containsString("variables:[")
+                                                                     .and(containsString("]")),
                                                                  containsString("let"),
                                                                  containsString("helloAct"))));
   }
