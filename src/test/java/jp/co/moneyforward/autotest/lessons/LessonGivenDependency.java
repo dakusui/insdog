@@ -3,11 +3,8 @@ package jp.co.moneyforward.autotest.lessons;
 
 import jp.co.moneyforward.autotest.framework.action.Act;
 import jp.co.moneyforward.autotest.framework.action.Scene;
-import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution;
+import jp.co.moneyforward.autotest.framework.annotations.*;
 import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution.Spec;
-import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
-import jp.co.moneyforward.autotest.framework.annotations.Export;
-import jp.co.moneyforward.autotest.framework.annotations.Named;
 
 import java.util.function.Consumer;
 
@@ -17,7 +14,7 @@ import static jp.co.moneyforward.autotest.ututils.ActUtils.let;
 @AutotestExecution(defaultExecution = @Spec(
     value = "sceneMethod",
     planExecutionWith = DEPENDENCY_BASED))
-public class LessonDependsOn extends LessonBase {
+public class LessonGivenDependency extends LessonBase {
   @Export
   @Named
   public Scene setUpMethod() {
@@ -27,7 +24,7 @@ public class LessonDependsOn extends LessonBase {
                 .end();
   }
   
-  @DependsOn("setUpMethod")
+  @Given("setUpMethod")
   @Named
   public Scene sceneMethod() {
     return Scene.begin()

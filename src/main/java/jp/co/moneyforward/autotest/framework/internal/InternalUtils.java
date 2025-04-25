@@ -6,6 +6,8 @@ import com.github.dakusui.actionunit.core.Action;
 import com.github.dakusui.actionunit.core.Context;
 import com.github.dakusui.osynth.core.utils.MethodUtils;
 import com.github.valid8j.pcond.forms.Printables;
+import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
+import jp.co.moneyforward.autotest.framework.annotations.Given;
 import jp.co.moneyforward.autotest.framework.annotations.Named;
 import jp.co.moneyforward.autotest.framework.core.AutotestException;
 import org.eclipse.jgit.lib.Repository;
@@ -186,6 +188,22 @@ public enum InternalUtils {
                  .filter(m -> m.isAnnotationPresent(Named.class))
                  .filter(m -> Objects.equals(nameOf(m), methodName))
                  .findFirst();
+  }
+  
+  public static boolean isDependencyAnnotationPresent(Method m) {
+    //noinspection removal
+    return m.isAnnotationPresent(Given.class) || m.isAnnotationPresent(DependsOn.class);
+  }
+  
+  public static String[] getDependencyAnnotationValues(Method m) {
+    //noinspection removal
+    return Stream.concat(Arrays.stream(Optional.ofNullable(m.getAnnotation(Given.class))
+                                               .map(Given::value)
+                                               .orElse(new String[0])),
+                         Arrays.stream(Optional.ofNullable(m.getAnnotation(DependsOn.class))
+                                               .map(DependsOn::value)
+                                               .orElse(new String[0])))
+                 .toArray(String[]::new);
   }
   
   // NOSONAR: Intrusive warning. Number of hierarchical depth should not be checked against very well known library such as opentest4j

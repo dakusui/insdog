@@ -2,19 +2,25 @@ package jp.co.moneyforward.autotest.lessons;
 
 import jp.co.moneyforward.autotest.framework.action.Act;
 import jp.co.moneyforward.autotest.framework.action.Scene;
-import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution;
+import jp.co.moneyforward.autotest.framework.annotations.*;
 import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution.Spec;
-import jp.co.moneyforward.autotest.framework.annotations.Export;
-import jp.co.moneyforward.autotest.framework.annotations.Named;
-import jp.co.moneyforward.autotest.framework.annotations.When;
 
 import static jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy.DEPENDENCY_BASED;
 import static jp.co.moneyforward.autotest.ututils.ActUtils.let;
 
 @AutotestExecution(defaultExecution = @Spec(
-    value = "performFunction",
+    value = "performTargetFunction",
     planExecutionWith = DEPENDENCY_BASED))
 public class LessonWhen extends LessonBase {
+  @Export()
+  @Named
+  public Scene performSetUp() {
+    return Scene.begin()
+                .act(let("Set Up!"))
+                .end();
+  }
+  
+  @Given("setUp")
   @Export()
   @Named
   public Scene performTargetFunction() {
@@ -24,7 +30,7 @@ public class LessonWhen extends LessonBase {
   }
   
   @Named
-  @When("performFunction")
+  @When("performTargetFunction")
   public Scene thenDatabaseRecordUpdated() {
     return Scene.begin().add(wasDatabaseRecordUpdated()).end();
   }

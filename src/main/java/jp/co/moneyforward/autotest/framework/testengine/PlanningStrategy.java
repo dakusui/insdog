@@ -3,6 +3,7 @@ package jp.co.moneyforward.autotest.framework.testengine;
 import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution;
 import jp.co.moneyforward.autotest.framework.annotations.ClosedBy;
 import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
+import jp.co.moneyforward.autotest.framework.annotations.Given;
 import jp.co.moneyforward.autotest.framework.annotations.When;
 
 import java.util.List;
@@ -58,7 +59,7 @@ public enum PlanningStrategy {
   ///
   /// @see ClosedBy
   /// @see When
-  /// @see DependsOn
+  /// @see Given
   ///
   DEPENDENCY_BASED {
     @Override
