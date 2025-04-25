@@ -4,18 +4,18 @@
     <artifactId>insdog-all</artifactId>
     <packaging>jar</packaging>
 
-    <version>0.4.8-SNAPSHOT</version>
+    <version>0.5.3-SNAPSHOT</version>
     <description>An action-based testing framework and library</description>
 
     <name>insdog</name>
     <url>http://moneyforward.github.io/${project.name}</url>
 
     <scm>
-        <connection>scm:git:git@github.com/moneyforward/${project.name}.git
+        <connection>scm:git:git@github.com/dakusui/${project.name}.git
         </connection>
-        <developerConnection>scm:git:git@github.com:moneyforward/${project.name}.git
+        <developerConnection>scm:git:git@github.com:dakusui/${project.name}.git
         </developerConnection>
-        <url>http://moneyforward.github.io/${project.name}</url>
+        <url>http://dakusui.github.io/${project.name}</url>
         <tag>${project.name}-${project.version}</tag>
     </scm>
 
@@ -421,6 +421,7 @@
                     <execution>
                         <id>attach-sources</id>
                         <goals>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -663,6 +664,7 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
                     <arguments>-Dgpg.passphrase=${gpg.passphrase}</arguments>
+                    <arguments>-P release-sign-artifacts</arguments>
                 </configuration>
             </plugin>
         </plugins>
@@ -704,10 +706,21 @@
     </reporting>
 
     <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus snapshot repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>github-mavenpkg</id>
-            <url>https://maven.pkg.github.com/moneyforward/mavenpkg</url>
+            <id>sonatype-nexus-staging</id>
+            <name>Sonatype Nexus release repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/
+            </url>
         </repository>
+        <site>
+            <id>${project.name}</id>
+            <url>file:///${user.dir}/target/site-staging</url>
+        </site>
     </distributionManagement>
 
     <profiles>
