@@ -20,7 +20,7 @@ public class LessonWhen extends LessonBase {
                 .end();
   }
   
-  @Given("setUp")
+  @Given("performSetUp")
   @Export()
   @Named
   public Scene performTargetFunction() {

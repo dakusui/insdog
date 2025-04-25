@@ -1,6 +1,5 @@
 package jp.co.moneyforward.autotest.framework.testengine;
 
-import com.github.dakusui.actionunit.actions.cmd.Commander;
 import jp.co.moneyforward.autotest.framework.action.*;
 import jp.co.moneyforward.autotest.framework.annotations.From;
 import jp.co.moneyforward.autotest.framework.annotations.PreparedBy;

@@ -6,12 +6,11 @@ import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
 import jp.co.moneyforward.autotest.framework.annotations.Given;
 import jp.co.moneyforward.autotest.framework.annotations.When;
 
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static jp.co.moneyforward.autotest.framework.testengine.AutotestEngineUtils.mergeListsByAppendingMissedOnes;
 
 ///
@@ -34,6 +33,7 @@ public enum PlanningStrategy {
           asList(executionSpec.beforeAll()),
           asList(executionSpec.beforeEach()),
           asList(executionSpec.value()),
+          Collections.emptyMap(),
           asList(executionSpec.afterEach()),
           asList(executionSpec.afterAll()));
     }
@@ -78,9 +78,40 @@ public enum PlanningStrategy {
                                    mergeListsByAppendingMissedOnes(List.of(executionSpec.beforeAll()), beforeAll),
                                    asList(executionSpec.beforeEach()),
                                    main,
+                                   composeDependencyMapInMain(main, sceneCallGraph),
                                    asList(executionSpec.afterEach()),
                                    asList(executionSpec.afterAll())),
                                assertions);
+    }
+    
+    private Map<String, List<String>> composeDependencyMapInMain(List<String> main, Map<String, List<String>> sceneCallGraph) {
+      var ret = new HashMap<String, List<String>>();
+      for (var each : main) {
+        ret.put(each, new ArrayList<>(intersect(allDependenciesOf(each, sceneCallGraph), new LinkedHashSet<>(main))));
+      }
+      return ret;
+    }
+    
+    LinkedHashSet<String> intersect(LinkedHashSet<String> a, LinkedHashSet<String> b ) {
+      LinkedHashSet<String> ret = new LinkedHashSet<>(a);
+      ret.retainAll(b);
+      return ret;
+    }
+    
+    private LinkedHashSet<String> allDependenciesOf(String scene, Map<String, List<String>> sceneCallGraph) {
+      var ret = new LinkedHashSet<String>();
+      dependenciesOf(ret, scene, sceneCallGraph);
+      return ret;
+    }
+    
+    private void dependenciesOf(LinkedHashSet<String> out, String scene, Map<String, List<String>> sceneCallGraph) {
+      if (sceneCallGraph.containsKey(scene)) {
+        List<String> dependenciesOfScene = sceneCallGraph.get(scene);
+        out.addAll(dependenciesOfScene);
+        for (var each: dependenciesOfScene) {
+          dependenciesOf(out, each, sceneCallGraph);
+        }
+      }
     }
     
     private static AutotestEngine.ExecutionPlan includeAssertions(AutotestEngine.ExecutionPlan executionPlan, Map<String, List<String>> assertions) {
@@ -88,6 +119,7 @@ public enum PlanningStrategy {
           executionPlan.beforeAll(),
           executionPlan.beforeEach(),
           includeAssertions(executionPlan.value(), assertions),
+          executionPlan.dependencies(),
           executionPlan.afterEach(),
           executionPlan.afterAll());
     }
