@@ -18,13 +18,13 @@ public class LessonClosedBy extends LessonBase {
   }
   
   @Named
-  @DependsOn("openExecutionSession")
+  @Given("openExecutionSession")
   public Scene performScenario() {
     return Scene.begin().act(let("openExecutionSession")).end();
   }
 
   @Named
-  @DependsOn("openExecutionSession")
+  @Given("openExecutionSession")
   public Scene closeExecutionSession() {
     return Scene.begin().act(let("closeExecutionSession")).end();
   }

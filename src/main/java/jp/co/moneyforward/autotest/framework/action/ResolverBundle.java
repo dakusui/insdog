@@ -1,10 +1,7 @@
 package jp.co.moneyforward.autotest.framework.action;
 
 import com.github.dakusui.actionunit.core.Context;
-import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
-import jp.co.moneyforward.autotest.framework.annotations.Export;
-import jp.co.moneyforward.autotest.framework.annotations.PreparedBy;
-import jp.co.moneyforward.autotest.framework.annotations.When;
+import jp.co.moneyforward.autotest.framework.annotations.*;
 import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 
 import java.lang.annotation.Annotation;
@@ -91,7 +88,9 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   /// @param accessModelClass An access model class to which method belongs.
   /// @return A list of resolvers that a scene returned by `method` requires.
   private static List<Resolver> resolversFromDependenciesOf(Method method, Class<?> accessModelClass) {
+    //noinspection removal
     return InternalUtils.concat(variableResolversFor(annotationValuesOf(method, PreparedBy.class, PreparedBy::value), accessModelClass).stream(),
+                                variableResolversFor(annotationValuesOf(method, Given.class, Given::value), accessModelClass).stream(),
                                 variableResolversFor(annotationValuesOf(method, DependsOn.class, DependsOn::value), accessModelClass).stream(),
                                 variableResolversFor(annotationValuesOf(method, When.class, When::value), accessModelClass).stream()).toList();
   }

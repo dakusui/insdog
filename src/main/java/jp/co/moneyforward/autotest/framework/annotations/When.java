@@ -44,7 +44,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 ///
 /// This and `@DependsOn` annotations are used mutually exclusively.
 ///
-/// @see DependsOn
+/// @see Given
 /// @see PlanningStrategy#DEPENDENCY_BASED
 ///
 @Retention(RUNTIME)

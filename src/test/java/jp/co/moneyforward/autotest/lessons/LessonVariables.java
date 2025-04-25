@@ -24,7 +24,7 @@ public class LessonVariables extends LessonBase {
   
   @Named
   @Export({"page", "childPage"})
-  @DependsOn("openBasePage")
+  @Given("openBasePage")
   public Scene performTargetFunction() {
     return Scene.begin("page")
                 .add("page", clickButton1(), "basePage")

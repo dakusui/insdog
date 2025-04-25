@@ -47,7 +47,7 @@ public class SelfTest implements AutotestRunner {
   @Named
   @ClosedBy("logout")
   @Export("page")
-  @DependsOn("open")
+  @Given("open")
   public static Scene login() {
     return Scene.begin()
                 .act(new Let<>("LOGIN"))
@@ -56,7 +56,7 @@ public class SelfTest implements AutotestRunner {
   
   @Named
   @Export("page")
-  @DependsOn("login")
+  @Given("login")
   public static Scene connect() {
     return Scene.begin()
                 .act(new Let<>("CONNECT"))
@@ -66,7 +66,7 @@ public class SelfTest implements AutotestRunner {
   
   @Named
   @Export("page")
-  @DependsOn("login")
+  @Given("login")
   public static Scene disconnect() {
     return new Scene.Builder("page")
         .act(new Let<>("DISCONNECT"))
@@ -74,7 +74,7 @@ public class SelfTest implements AutotestRunner {
   }
   
   @Named
-  @DependsOn("login")
+  @Given("login")
   public static Scene logout() {
     return new Scene.Builder("page")
         .act(new Let<>("LOGOUT"))
@@ -82,7 +82,7 @@ public class SelfTest implements AutotestRunner {
   }
   
   @Named
-  @DependsOn("open")
+  @Given("open")
   public static Scene close() {
     return new Scene.Builder("page")
         .act(new Let<>("CLOSE"))

@@ -5,7 +5,7 @@ import jp.co.moneyforward.autotest.framework.annotations.*;
 import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution.Spec;
 
 import static jp.co.moneyforward.autotest.framework.testengine.PlanningStrategy.DEPENDENCY_BASED;
-import static jp.co.moneyforward.autotest.lessons.LessonDependsOn.sink;
+import static jp.co.moneyforward.autotest.lessons.LessonGivenDependency.sink;
 import static jp.co.moneyforward.autotest.ututils.ActUtils.let;
 
 @AutotestExecution(defaultExecution = @Spec(
@@ -34,7 +34,7 @@ public class LessonPreparedBy extends LessonBase {
   }
   
   @Named
-  @DependsOn("isLoggedIn")
+  @Given("isLoggedIn")
   public Scene performScenario() {
     return Scene.begin()
                 .act(let("performScenario"))

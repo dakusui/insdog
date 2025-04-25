@@ -47,8 +47,7 @@ import static java.util.Collections.unmodifiableList;
 import static java.util.stream.Collectors.toMap;
 import static jp.co.moneyforward.autotest.framework.action.ActionComposer.createActionComposer;
 import static jp.co.moneyforward.autotest.framework.core.ExecutionEnvironment.testResultDirectory;
-import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.composeResultMessageLine;
-import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.reverse;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.*;
 import static jp.co.moneyforward.autotest.framework.testengine.AutotestEngine.Stage.*;
 
 /// The test execution engine of the **insdog**.
@@ -454,8 +453,8 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
           .filter(m -> m.isAnnotationPresent(Named.class))
           .filter(m -> !m.isAnnotationPresent(Disabled.class))
           .forEach(m -> {
-            if (m.isAnnotationPresent(DependsOn.class)) {
-              sceneCallGraph.put(InternalUtils.nameOf(m), Arrays.stream(m.getAnnotation(DependsOn.class).value()).toList());
+            if (isDependencyAnnotationPresent(m)) {
+              sceneCallGraph.put(InternalUtils.nameOf(m), Arrays.stream(getDependencyAnnotationValues(m)).toList());
             } else {
               sceneCallGraph.put(InternalUtils.nameOf(m), emptyList());
             }
