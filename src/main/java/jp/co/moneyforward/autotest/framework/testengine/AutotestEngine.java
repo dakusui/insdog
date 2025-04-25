@@ -6,7 +6,10 @@ import com.github.valid8j.pcond.fluent.Statement;
 import jp.co.moneyforward.autotest.framework.action.ActionComposer;
 import jp.co.moneyforward.autotest.framework.action.Call;
 import jp.co.moneyforward.autotest.framework.action.SceneCall;
-import jp.co.moneyforward.autotest.framework.annotations.*;
+import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution;
+import jp.co.moneyforward.autotest.framework.annotations.ClosedBy;
+import jp.co.moneyforward.autotest.framework.annotations.Named;
+import jp.co.moneyforward.autotest.framework.annotations.When;
 import jp.co.moneyforward.autotest.framework.core.AutotestRunner;
 import jp.co.moneyforward.autotest.framework.core.ExecutionEnvironment;
 import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
@@ -36,6 +39,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.github.dakusui.actionunit.core.ActionSupport.named;
+import static com.github.dakusui.actionunit.core.ActionSupport.sequential;
 import static com.github.dakusui.actionunit.exceptions.ActionException.wrap;
 import static com.github.valid8j.classic.Requires.requireNonNull;
 import static com.github.valid8j.fluent.Expectations.*;
@@ -84,8 +89,7 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   /// Note that test template is pre-defined as `runTestAction(String, Action)` method in `AutotestRunner` class and
   /// test programmers do not need to defined it by themselves.
   ///
-  /// @param extensionContext the extension context for the test template method about
-  ///                                                                                                                                                                                                                                                                                                                         to be invoked; never {@code null}
+  /// @param extensionContext the extension context for the test template method about to be invoked; never {@code null}
   /// @return `true`.
   @Override
   public boolean supportsTestTemplate(ExtensionContext extensionContext) {
@@ -94,8 +98,7 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   
   /// Returns a stream of `TestTemplateInvocationContext` objects.
   ///
-  /// @param extensionContext the extension context for the test template method about
-  ///                                                                                                                                                                                                                                                                                                                         to be invoked; never {@code null}
+  /// @param extensionContext the extension context for the test template method about to be invoked; never {@code null}
   /// @return A stream of `TestTemplateInvocationContext` objects.
   @Override
   public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext extensionContext) {
@@ -105,37 +108,37 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
                                           .stream()
                                           .filter(sceneCallMap::containsKey)
                                           .map((String eachSceneName) -> createTestTemplateInvocationContext(extensionContext,
-                                                                                                             sceneCallMap.get(eachSceneName),
+                                                                                                             sceneCallMap,
                                                                                                              eachSceneName,
                                                                                                              indexHolder));
   }
   
   /// Executes actions planned for **Before All** stage.
   ///
-  /// @param executionContext the current extension context; never {@code null}
+  /// @param extensionContext the current extension context; never {@code null}
   @Override
-  public void beforeAll(ExtensionContext executionContext) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
-    prepareBeforeAllStage(executionContext, System.getProperties());
+  public void beforeAll(ExtensionContext extensionContext) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+    prepareBeforeAllStage(extensionContext, System.getProperties());
     
-    AutotestRunner runner = autotestRunner(executionContext);
+    AutotestRunner runner = autotestRunner(extensionContext);
     String stageName = BEFORE_ALL.stageName();
-    ExecutionEnvironment executionEnvironment = createExecutionEnvironment(executionContext, executionContext::getDisplayName, stageName);
+    ExecutionEnvironment executionEnvironment = createExecutionEnvironment(extensionContext, extensionContext::getDisplayName, stageName);
     configureLogging(executionEnvironment.testOutputFilenameFor("autotestExecution-beforeAll", "log"), Level.INFO);
     
-    logExecutionPlan(testClass(executionContext), executionPlan(executionContext));
+    logExecutionPlan(testClass(extensionContext), executionPlan(extensionContext));
     
-    Map<String, SceneCall> sceneCallMap = sceneCallMap(executionContext);
-    executionPlan(executionContext).beforeAll()
+    Map<String, SceneCall> sceneCallMap = sceneCallMap(extensionContext);
+    executionPlan(extensionContext).beforeAll()
                                    .stream()
                                    .filter(sceneCallMap::containsKey)
-                                   .map((String eachSceneName) -> sceneNameToActionEntry(eachSceneName, executionContext, executionEnvironment))
+                                   .map((String eachSceneName) -> sceneNameToActionEntry(eachSceneName, extensionContext, executionEnvironment))
                                    .map(each -> performActionEntry(each, out -> runner.beforeAll(each.value(), runner.createWriter(out))))
-                                   .filter(each -> keepRecordForPassingResult(each, passedScenesInBeforeAll(executionContext)))
+                                   .filter(each -> keepRecordForPassingResult(each, passedScenesInBeforeAll(extensionContext)))
                                    .filter(AutotestEngine::hasSucceededOrThrowException)
                                    // In order to ensure all the actions are finished, accumulate the all entries into the list, first.
                                    // Then, stream again. Otherwise, the log will not become so readable.
                                    .toList()
-                                   .forEach(r -> logExecutionSceneExecutionResult(r, stageName, executionContext));
+                                   .forEach(r -> logExecutionSceneExecutionResult(r, stageName, extensionContext));
   }
   
   /// Executes actions planned for **Before Each** stage.
@@ -308,12 +311,24 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   }
   
   private static TestTemplateInvocationContext createTestTemplateInvocationContext(ExtensionContext extensionContext,
-                                                                                   final Call currentCall,
+                                                                                   Map<String, SceneCall> sceneCallMap,
                                                                                    String sceneName,
                                                                                    AtomicInteger indexHolder) {
     return new TestTemplateInvocationContext() {
       final String displayName = computeDisplayName(indexHolder.getAndIncrement());
-      final Action value = sceneCallToAction(currentCall, createActionComposer(createExecutionEnvironment(extensionContext, () -> Optional.of(displayName).orElse("XXX"), "main")));
+      final ActionComposer actionComposer = createActionComposer(createExecutionEnvironment(extensionContext,
+                                                                                            () -> Optional.of(displayName).orElse("XXX"),
+                                                                                            "main"));
+      final Action value = sceneCallToAction(sceneCallMap.get(sceneName),
+                                             actionComposer);
+      final List<String> coveredInMain = coveredInMain(extensionContext);
+      final List<String> dependencyNames = Optional.ofNullable(executionPlan(extensionContext).dependenciesOf(sceneName))
+                                                   .orElse(emptyList());
+      final List<Action> d = dependencyNames.stream()
+                                            .filter(n -> !coveredInMain.contains(n))
+                                            .map(sceneCallMap::get)
+                                            .map(s -> sceneCallToAction(s, actionComposer))
+                                            .toList();
       
       @Override
       public List<Extension> getAdditionalExtensions() {
@@ -326,7 +341,13 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
           @Override
           public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext1) throws ParameterResolutionException {
             if (parameterContext.getParameter().getType().isAssignableFrom(Action.class)) {
-              return value;
+              coveredInMain.add(sceneName);
+              coveredInMain.addAll(dependencyNames);
+              if (d.isEmpty())
+                return value;
+              if (d.size() == 1)
+                return sequential(named("dependency", d.getFirst()), value);
+              return sequential(named("dependencies", sequential(d)), value);
             } else if (parameterContext.getParameter().getType().isAssignableFrom(String.class)) {
               return sceneName;
             } else if (parameterContext.getParameter().getType().isAssignableFrom(Writer.class)) {
@@ -372,13 +393,14 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
     var closers = closers(runner.getClass());
     //NOSONAR
     assert Contracts.explicitlySpecifiedScenesAreAllCoveredInCorrespondingPlannedStage(spec, executionPlan);
-    ExtensionContext.Store executionContextStore = executionContextStore(context);
+    ExtensionContext.Store exetensionContextStore = exetensionContextStore(context);
     
-    executionContextStore.put("runner", runner);
-    executionContextStore.put("sceneCallMap", sceneCallMap);
-    executionContextStore.put("sceneClosers", closers);
-    executionContextStore.put("executionPlan", executionPlan);
+    exetensionContextStore.put("runner", runner);
+    exetensionContextStore.put("sceneCallMap", sceneCallMap);
+    exetensionContextStore.put("sceneClosers", closers);
+    exetensionContextStore.put("executionPlan", executionPlan);
     newPassedInBeforeAll(context);
+    newCoveredInMain(context);
   }
   
   private static ExecutionEnvironment createExecutionEnvironment(ExtensionContext context, Supplier<String> displayNameSupplier, String stageName) {
@@ -514,41 +536,50 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   
   @SuppressWarnings("unchecked")
   private static Map<String, String> sceneClosers(ExtensionContext context) {
-    return (Map<String, String>) executionContextStore(context).get("sceneClosers");
+    return (Map<String, String>) exetensionContextStore(context).get("sceneClosers");
+  }
+  
+  @SuppressWarnings("unchecked")
+  private static List<String> coveredInMain(ExtensionContext extensionContext) {
+    return (List<String>) exetensionContextStore(extensionContext).get("coveredInMain");
+  }
+  
+  private static void newCoveredInMain(ExtensionContext extensionContext) {
+    exetensionContextStore(extensionContext).put("coveredInMain", new LinkedList<>());
   }
   
   private static void newPassedInBeforeAll(ExtensionContext context) {
-    executionContextStore(context).put("passedInBeforeAll", new HashSet<>());
+    exetensionContextStore(context).put("passedInBeforeAll", new HashSet<>());
   }
   
   @SuppressWarnings("unchecked")
   private static Set<String> passedScenesInBeforeAll(ExtensionContext context) {
-    return (Set<String>) executionContextStore(context).get("passedInBeforeAll");
+    return (Set<String>) exetensionContextStore(context).get("passedInBeforeAll");
   }
   
   private static void newPassedInBeforeEach(ExtensionContext context) {
-    executionContextStore(context).put("passedInBeforeEach", new HashSet<>());
+    exetensionContextStore(context).put("passedInBeforeEach", new HashSet<>());
   }
   
   @SuppressWarnings("unchecked")
   private static Set<String> passedInBeforeEach(ExtensionContext context) {
-    return (Set<String>) executionContextStore(context).get("passedInBeforeEach");
+    return (Set<String>) exetensionContextStore(context).get("passedInBeforeEach");
   }
   
   @SuppressWarnings("unchecked")
   private static Map<String, SceneCall> sceneCallMap(ExtensionContext context) {
-    return (Map<String, SceneCall>) executionContextStore(context).get("sceneCallMap");
+    return (Map<String, SceneCall>) exetensionContextStore(context).get("sceneCallMap");
   }
   
   private static ExecutionPlan executionPlan(ExtensionContext context) {
-    return (ExecutionPlan) executionContextStore(context).get("executionPlan");
+    return (ExecutionPlan) exetensionContextStore(context).get("executionPlan");
   }
   
   private static AutotestRunner autotestRunner(ExtensionContext context) {
-    return (AutotestRunner) executionContextStore(context).get("runner");
+    return (AutotestRunner) exetensionContextStore(context).get("runner");
   }
   
-  private static ExtensionContext.Store executionContextStore(ExtensionContext context) {
+  private static ExtensionContext.Store exetensionContextStore(ExtensionContext context) {
     return context.getStore(ExtensionContext.Namespace.GLOBAL);
   }
   
@@ -576,7 +607,7 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   /// @return `m` itself.
   private static Method validateSceneProvidingMethod(Method m) {
     // TODO: https://app.asana.com/0/1206402209253009/1207418182714921/f
-    // @When and @DependsOn are mutually exclusively used.
+    // @When and @Given (@DependsOn) are mutually exclusively used.
     // Methods specified by {@When,@DependsOn}#value() must be found in the class to which `m` belongs.
     // If "!" is appended to a method name in {@When,@DependsOn}#value(), the method must NOT have @ClosedBy.
     // - Because it may be performed multiple times.
@@ -643,15 +674,26 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   /// In situations, where a non-directly required scenes need to be executed for some reason (E.g., a scene in a stage requires some others to be executed beforehand),
   /// including the scenes implicitly and sorting out the execution order appropriately is the responsibility of the `PlanningStrategy`, not the engine.
   ///
-  /// @param beforeAll  The names of the scenes to be executed in the `beforeAll` scene.
-  /// @param beforeEach The names of the scenes to be executed in the `beforeEach` scene.
-  /// @param value      The names of the scenes to be executed as real tests.
-  /// @param afterEach  The names of the scenes to be executed in the `afterEach` scene.
-  /// @param afterAll   The names of the scenes to be executed in the `afterAll` scene.
+  /// @param beforeAll    The names of the scenes to be executed in the `beforeAll` scene.
+  /// @param beforeEach   The names of the scenes to be executed in the `beforeEach` scene.
+  /// @param value        The names of the scenes to be executed as real tests.
+  /// @param dependencies A map that holds dependencies of a given scene in main.
+  /// @param afterEach    The names of the scenes to be executed in the `afterEach` scene.
+  /// @param afterAll     The names of the scenes to be executed in the `afterAll` scene.
   /// @see AutotestEngine
   /// @see PlanningStrategy
-  public record ExecutionPlan(List<String> beforeAll, List<String> beforeEach, List<String> value,
+  public record ExecutionPlan(List<String> beforeAll, List<String> beforeEach,
+                              List<String> value,
+                              Map<String, List<String>> dependencies,
                               List<String> afterEach, List<String> afterAll) {
+    /**
+     * @param sceneName A scene name in main (`value` list)
+     * @return A list of dependencies of a given `sceneName`.
+     * Note that only dependencies in `value` list will be returned in the list.
+     */
+    List<String> dependenciesOf(String sceneName) {
+      return dependencies.get(sceneName);
+    }
   }
   
   /// A class that models a result of a scene execution.

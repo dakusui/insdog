@@ -3,7 +3,6 @@ package jp.co.moneyforward.autotest.framework.action;
 import com.github.dakusui.actionunit.core.Context;
 import jp.co.moneyforward.autotest.framework.annotations.*;
 import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
-import jp.co.moneyforward.autotest.framework.internal.InternalUtils.Entry;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -12,8 +11,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toMap;
-import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.Entry.*;
 import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.findMethodByName;
 
 /// A bundle of variable resolvers.
@@ -22,7 +19,6 @@ import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.findM
 /// This class bundles a set of such resolvers and associated each resolver with a variable name which the resolver
 /// should figure out the value.
 public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
-  ///
   /// Creates an instance of this class.
   ///
   /// @param resolvers A map of resolvers from variable names to resolvers.
@@ -54,7 +50,7 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   ///
   /// @param targetMethod     A method which creates a `Scene`.
   /// @param accessModelClass A class to which `targetMethod` belongs and from which dependencies of `target` method are
-  ///                                                                         searched.
+  ///                                                                                                 searched.
   /// @return A resolver bundle for a `Scene` created by `targetMethod`.
   public static ResolverBundle resolverBundleFromDependenciesOf(Method targetMethod, Class<?> accessModelClass) {
     //assert Scene.class.isAssignableFrom(targetMethod.getReturnType());
@@ -69,8 +65,8 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   ///
   /// @param scene             A scene for which variable resolvers are created and returned.
   /// @param variableStoreName A name of a context variable that stores a map.
-  ///                                                                            From the map, the returned resolvers figure out the values of given variable names,
-  ///                                                                            which are used by the scene.
+  ///                                                                                                     From the map, the returned resolvers figure out the values of given variable names,
+  ///                                                                                                     which are used by the scene.
   /// @return A list of variable resolvers.
   private static List<Resolver> createVariableResolversFor(Scene scene, String variableStoreName) {
     return Resolver.resolversFor(Stream.concat(scene.inputVariableNames().stream(),
@@ -153,16 +149,13 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
     for (Resolver resolver : resolvers) {
       resolverMap.put(resolver.variableName(), resolver.resolverFunction());
     }
-    resolverMap.put("*ALL*", new Function<Context, Object>() {
-      @Override
-      public Map<String, Object> apply(Context context) {
-        // As Collectors.toMap doesn't accept `null` value, we do normal "for" loop.
-        Map<String, Object> ret = new LinkedHashMap<>();
-        for (var r: resolvers) {
-          ret.put(r.variableName(), r.resolverFunction().apply(context));
-        }
-        return ret;
-    }
+    resolverMap.put("*ALL*", context -> {
+      // As Collectors.toMap doesn't accept `null` value, we do normal "for" loop.
+      Map<String, Object> ret = new LinkedHashMap<>();
+      for (var r : resolvers) {
+        ret.put(r.variableName(), r.resolverFunction().apply(context));
+      }
+      return ret;
     });
     return resolverMap;
   }
