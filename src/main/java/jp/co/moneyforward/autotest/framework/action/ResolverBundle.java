@@ -3,6 +3,7 @@ package jp.co.moneyforward.autotest.framework.action;
 import com.github.dakusui.actionunit.core.Context;
 import jp.co.moneyforward.autotest.framework.annotations.*;
 import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils.Entry;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -11,6 +12,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toMap;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.Entry.*;
 import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.findMethodByName;
 
 /// A bundle of variable resolvers.
@@ -150,6 +153,17 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
     for (Resolver resolver : resolvers) {
       resolverMap.put(resolver.variableName(), resolver.resolverFunction());
     }
+    resolverMap.put("*ALL*", new Function<Context, Object>() {
+      @Override
+      public Map<String, Object> apply(Context context) {
+        // As Collectors.toMap doesn't accept `null` value, we do normal "for" loop.
+        Map<String, Object> ret = new LinkedHashMap<>();
+        for (var r: resolvers) {
+          ret.put(r.variableName(), r.resolverFunction().apply(context));
+        }
+        return ret;
+    }
+    });
     return resolverMap;
   }
   
