@@ -87,7 +87,11 @@ public final class SceneCall implements Call, WithOid {
     try {
       String ongoingWorkingVariableStoreName = ongoingWorkingVariableStoreNames.isEmpty() ? null
                                                                                           : ongoingWorkingVariableStoreNames.getLast();
-      return action("variables:" + this.resolverBundle().keySet(),
+      return action("variables:" + this.resolverBundle()
+                                       .keySet()
+                                       .stream()
+                                       .filter(n -> !n.equals("*ALL*"))
+                                       .toList(),
                     c -> c.assignTo(workingVariableStoreName(),
                                     composeWorkingVariableStore(ongoingWorkingVariableStoreName,
                                                                 this,

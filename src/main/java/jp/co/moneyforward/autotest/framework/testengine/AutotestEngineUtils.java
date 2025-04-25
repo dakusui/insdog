@@ -1,5 +1,6 @@
 package jp.co.moneyforward.autotest.framework.testengine;
 
+import com.github.dakusui.actionunit.actions.cmd.Commander;
 import jp.co.moneyforward.autotest.framework.action.*;
 import jp.co.moneyforward.autotest.framework.annotations.From;
 import jp.co.moneyforward.autotest.framework.annotations.PreparedBy;
@@ -87,9 +88,7 @@ public enum AutotestEngineUtils {
   
   private static Scene methodToSceneByActTimeInvocation(Method method, AutotestRunner runner) {
     Method m = validateMethodToDefineSceneIndirectly(method);
-    String inputVariableName = Optional.ofNullable(m.getParameterCount() > 0 ? m.getParameters()[0].getAnnotation(From.class) : null)
-                                       .map(From::value)
-                                       .orElse(DEFAULT_DEFAULT_VARIABLE_NAME);
+    String inputVariableName = "*ALL*";
     String outputVariableName = Optional.ofNullable(m.getAnnotation(To.class))
                                         .map(To::value)
                                         .orElse(Scene.DUMMY_OUTPUT_VARIABLE_NAME);
@@ -103,7 +102,8 @@ public enum AutotestEngineUtils {
   private static Act<?, ?> methodToAct(AutotestRunner runner, Method method) {
     return InsdogUtils.func((Object in) -> {
       try {
-        return method.invoke(runner, composeArgsFor(method, in));
+        @SuppressWarnings("unchecked") Map<String, Object> vars = (Map<String, Object>) in;
+        return method.invoke(runner, composeArgsFor(method, vars));
       } catch (RuntimeException e) {
         throw new AutotestException(MessageFormat.format("Failed to execute: {0}: {1}",
                                                          composeDescriptionFor(method, runner, in),
@@ -115,13 +115,19 @@ public enum AutotestEngineUtils {
     }).describe(method.getName());
   }
   
-  private static Object[] composeArgsFor(Method method, Object in) {
-    if (method.getParameterCount() == 1) {
-      return new Object[]{in};
-    } else if (method.getParameterCount() == 0) {
-      return new Object[0];
-    }
-    throw new UnsupportedOperationException(composeDescriptionFor(method, null, in));
+  private static Object[] composeArgsFor(Method method, Map<String, Object> in) {
+    List<String> errors = new ArrayList<>();
+      Object[] ret = Arrays.stream(method.getParameters())
+                             .map(p -> p.getAnnotation(From.class).value())
+                             .peek(from -> {
+                               if (!in.containsKey(from))
+                                 errors.add(from);
+                             })
+                             .map(in::get)
+                             .toArray();
+      if (!errors.isEmpty())
+        throw new AutotestException("Undefined variables: " + errors, null);
+      return ret;
   }
   
   private static String composeDescriptionFor(Method m, AutotestRunner runner, Object in) {
@@ -143,8 +149,7 @@ public enum AutotestEngineUtils {
       return new EnsuredCall(sceneToSceneCall(methodToScene(method, runner),
                                               resolverBundleFromDependenciesOf(method, accessModelClass),
                                               InternalUtils.nameOf(method)),
-                             annotationsToEnsurers(preparedByAnnotations,
-                                                   accessModelClass, runner, method),
+                             annotationsToEnsurers(preparedByAnnotations, accessModelClass, runner, method),
                              resolverBundleFromDependenciesOf(method, accessModelClass));
     }
     return sceneToSceneCall(methodToScene(method, runner),
