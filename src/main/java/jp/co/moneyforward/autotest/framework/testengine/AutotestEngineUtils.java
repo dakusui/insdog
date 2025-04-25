@@ -118,7 +118,8 @@ public enum AutotestEngineUtils {
   private static Object[] composeArgsFor(Method method, Map<String, Object> in) {
     List<String> errors = new ArrayList<>();
       Object[] ret = Arrays.stream(method.getParameters())
-                             .map(p -> p.getAnnotation(From.class).value())
+                             .map(p -> p.isAnnotationPresent(From.class) ? p.getAnnotation(From.class).value()
+                                                                         : DEFAULT_DEFAULT_VARIABLE_NAME)
                              .peek(from -> {
                                if (!in.containsKey(from))
                                  errors.add(from);
