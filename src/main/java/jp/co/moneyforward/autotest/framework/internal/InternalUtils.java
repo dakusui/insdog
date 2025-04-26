@@ -37,6 +37,7 @@ import static java.lang.Thread.currentThread;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static jp.co.moneyforward.autotest.actions.web.SendKey.MASK_PREFIX;
+import static jp.co.moneyforward.autotest.framework.action.Scene.DUMMY_OUTPUT_VARIABLE_NAME;
 
 /// An internal utility class of the **insdog** framework.
 public enum InternalUtils {
@@ -206,6 +207,14 @@ public enum InternalUtils {
                  .toArray(String[]::new);
   }
   
+  public static String variableNameToString(String variableName) {
+    if (Objects.equals(variableName, DUMMY_OUTPUT_VARIABLE_NAME))
+      return "";
+    if (Objects.equals(variableName, "*ALL*"))
+      return "*";
+    return variableName;
+  }
+  
   // NOSONAR: Intrusive warning. Number of hierarchical depth should not be checked against very well known library such as opentest4j
   public static class AssumptionViolation extends TestAbortedException {
     public AssumptionViolation(String message) {
@@ -276,7 +285,7 @@ public enum InternalUtils {
           String message = "Variable Store: <" + variableStoreName + "> not found. ";
           LOGGER.error(message);
           LOGGER.debug("Caused by: <" + e.getMessage() + ">", e);
-          throw wrap(new Exception(message + ": Caused by: <" + e.getMessage() + ">"));
+          throw new AutotestException(message + ": Caused by: <" + e.getMessage() + ">", null);
         }
       }
     }

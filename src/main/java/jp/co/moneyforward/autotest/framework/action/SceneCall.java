@@ -2,10 +2,14 @@ package jp.co.moneyforward.autotest.framework.action;
 
 import com.github.dakusui.actionunit.core.Action;
 import com.github.dakusui.actionunit.core.Context;
+import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static com.github.valid8j.classic.Requires.requireNonNull;
 import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.action;
@@ -13,6 +17,7 @@ import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.trivi
 
 /// A class to model a "call" to a `Scene`.
 public final class SceneCall implements Call, WithOid {
+  private static final Logger LOGGER = LoggerFactory.getLogger(SceneCall.class);
   private final Scene scene;
   private final ResolverBundle resolverBundle;
   private final String outputVariableStoreName;
@@ -91,6 +96,7 @@ public final class SceneCall implements Call, WithOid {
                                        .keySet()
                                        .stream()
                                        .filter(n -> !n.equals("*ALL*"))
+                                       .map(InternalUtils::variableNameToString)
                                        .toList(),
                     c -> c.assignTo(workingVariableStoreName(),
                                     composeWorkingVariableStore(ongoingWorkingVariableStoreName,
@@ -130,7 +136,20 @@ public final class SceneCall implements Call, WithOid {
     Map<String, Object> ret = context.defined(ongoingWorkingVariableStoreName) ? context.valueOf(ongoingWorkingVariableStoreName)
                                                                                : new HashMap<>();
     sceneCall.resolverBundle()
-             .forEach((k, r) -> ret.put(k, r.apply(context)));
+             .forEach((k, r) -> resolveVariableInContext(context, k, r, ret));
     return ret;
+  }
+  
+  private static void resolveVariableInContext(Context context, String k, Function<Context, Object> r, Map<String, Object> out) {
+    Object value = r.apply(context);
+    if (k.equals("*ALL*") && out.containsKey(k)) {
+      //noinspection unchecked
+      ((Map<String, Object>)out.get(k)).putAll((Map<? extends String, ?>) value);
+      return;
+    }
+    if (out.containsKey(k)) {
+      LOGGER.warn("A variable: '{}'({}) is overwritten with: '{}'.", k, out.get(k), value);
+    }
+    out.put(k, value);
   }
 }

@@ -17,7 +17,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 ///
 /// @see When
 /// @see PlanningStrategy#DEPENDENCY_BASED
-/// @see Given
+/// @deprecated Use {@link Given} instead.
 ///
 @Retention(RUNTIME)
 @Target(METHOD)
