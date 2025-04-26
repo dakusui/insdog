@@ -49,8 +49,7 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   /// `targetMethod`.
   ///
   /// @param targetMethod     A method which creates a `Scene`.
-  /// @param accessModelClass A class to which `targetMethod` belongs and from which dependencies of `target` method are
-  ///                                                                                                 searched.
+  /// @param accessModelClass A class to which `targetMethod` belongs and from which dependencies of `target` method are searched.
   /// @return A resolver bundle for a `Scene` created by `targetMethod`.
   public static ResolverBundle resolverBundleFromDependenciesOf(Method targetMethod, Class<?> accessModelClass) {
     //assert Scene.class.isAssignableFrom(targetMethod.getReturnType());
@@ -61,12 +60,13 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   /// The returned variable resolvers figure out the value of a given variable name from a Map context variable.
   /// The context variable is specified by a `variableStoreName`.
   ///
+  /// `variableStoreName` is a name of a context variable that stores a map. From the map,
+  /// the returned resolvers figure out the values of given variable names, which are used by the scene.
+  ///
   /// This is "de facto"-based method to create variable resolvers, so to say.
   ///
   /// @param scene             A scene for which variable resolvers are created and returned.
   /// @param variableStoreName A name of a context variable that stores a map.
-  ///                                                                                                     From the map, the returned resolvers figure out the values of given variable names,
-  ///                                                                                                     which are used by the scene.
   /// @return A list of variable resolvers.
   private static List<Resolver> createVariableResolversFor(Scene scene, String variableStoreName) {
     return Resolver.resolversFor(Stream.concat(scene.inputVariableNames().stream(),
@@ -135,7 +135,8 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   private static List<Resolver> exportedVariablesResolversOf(String sceneName, Function<String, List<String>> exportedVariablesNamesResolver) {
     return exportedVariablesNamesResolver.apply(sceneName)
                                          .stream()
-                                         .map((String variableNane) -> Resolver.resolverFor(variableNane, sceneName)).toList();
+                                         .map((String variableNane) -> Resolver.resolverFor(variableNane, sceneName))
+                                         .toList();
   }
   
   private static List<String> exportedVariablesOf(Method method) {
