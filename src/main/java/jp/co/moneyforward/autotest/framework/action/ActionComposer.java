@@ -4,7 +4,6 @@ import com.github.dakusui.actionunit.actions.Ensured;
 import com.github.dakusui.actionunit.core.Action;
 import com.github.dakusui.actionunit.core.Context;
 import com.github.valid8j.pcond.forms.Printables;
-import jp.co.moneyforward.autotest.framework.core.AutotestException;
 import jp.co.moneyforward.autotest.framework.core.ExecutionEnvironment;
 import jp.co.moneyforward.autotest.framework.internal.InternalUtils;
 import org.slf4j.Logger;
@@ -20,8 +19,7 @@ import java.util.stream.Stream;
 
 import static com.github.dakusui.actionunit.core.ActionSupport.*;
 import static com.github.valid8j.classic.Requires.requireNonNull;
-import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.concat;
-import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.wrap;
+import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.*;
 
 /// An interface that models a factory of actions.
 ///
@@ -99,7 +97,7 @@ public interface ActionComposer {
   default Action create(ActCall<?, ?> actCall) {
     SceneCall ongoingSceneCall = ongoingSceneCall();
     
-    return InternalUtils.action(actCall.act().name() + "[" + actCall.inputVariableName() + "]",
+    return InternalUtils.action(variableNameToString(actCall.outputVariableName()) + ":=" + actCall.act().name() + "[" + variableNameToString(actCall.inputVariableName()) + "]",
                                 toContextConsumerFromAct(ongoingSceneCall,
                                                          actCall,
                                                          this.executionEnvironment()));
@@ -130,16 +128,16 @@ public interface ActionComposer {
         workingVariableStore.put(outputVariableName, v);
       } catch (Error | RuntimeException e) {
         String message = (MessageFormat.format("Scene<{0}>.Act<{1}>[{2}]: available variables are: {3}",
-                                                ongoingSceneCall.outputVariableStoreName(),
-                                                act.name(),
-                                                inputVariableResolver.toString(),
-                                                workingVariableStore.keySet()
-                                                                    .stream()
-                                                                    .sorted()
-                                                                    .map(k -> MessageFormat.format("{0}={1}",
-                                                                                                   k,
-                                                                                                   workingVariableStore.get(k)))
-                                                                    .toList()));
+                                               ongoingSceneCall.outputVariableStoreName(),
+                                               act.name(),
+                                               inputVariableResolver.toString(),
+                                               workingVariableStore.keySet()
+                                                                   .stream()
+                                                                   .sorted()
+                                                                   .map(k -> MessageFormat.format("{0}={1}",
+                                                                                                  k,
+                                                                                                  workingVariableStore.get(k)))
+                                                                   .toList()));
         
         LOGGER.error(e.getMessage());
         throw wrap(e);
