@@ -108,7 +108,6 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
                                           .stream()
                                           .filter(sceneCallMap::containsKey)
                                           .map((String eachSceneName) -> createTestTemplateInvocationContext(extensionContext,
-                                                                                                             sceneCallMap,
                                                                                                              eachSceneName,
                                                                                                              indexHolder));
   }
@@ -311,18 +310,18 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   }
   
   private static TestTemplateInvocationContext createTestTemplateInvocationContext(ExtensionContext extensionContext,
-                                                                                   Map<String, SceneCall> sceneCallMap,
                                                                                    String sceneName,
                                                                                    AtomicInteger indexHolder) {
     return new TestTemplateInvocationContext() {
+      final Map<String, SceneCall> sceneCallMap = sceneCallMap(extensionContext);
       final String displayName = computeDisplayName(indexHolder.getAndIncrement());
       final ActionComposer actionComposer = createActionComposer(createExecutionEnvironment(extensionContext,
-                                                                                            () -> Optional.of(displayName).orElse("XXX"),
+                                                                                            () -> displayName,
                                                                                             "main"));
       final List<String> alreadyPerformedInMain = alreadyPerformedInMain(extensionContext);
-      final List<String> dependencyNames = Optional.ofNullable(executionPlan(extensionContext).dependenciesOf(sceneName))
-                                                   .orElse(emptyList());
-      final List<SceneCall> d = IntStream.range(0, dependencyNames.size()).map(i -> dependencyNames.size() - i - 1)
+      final List<String> dependencyNames = executionPlan(extensionContext).dependenciesOf(sceneName);
+      final List<SceneCall> d = IntStream.range(0, dependencyNames.size())
+                                         .map(i -> dependencyNames.size() - i - 1)
                                          .mapToObj(dependencyNames::get)
                                          .filter(n -> !alreadyPerformedInMain.contains(n))
                                          .map(sceneCallMap::get)
@@ -673,28 +672,79 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   /// In situations, where a non-directly required scenes need to be executed for some reason (E.g., a scene in a stage requires some others to be executed beforehand),
   /// including the scenes implicitly and sorting out the execution order appropriately is the responsibility of the `PlanningStrategy`, not the engine.
   ///
-  /// @param beforeAll    The names of the scenes to be executed in the `beforeAll` scene.
-  /// @param beforeEach   The names of the scenes to be executed in the `beforeEach` scene.
-  /// @param value        The names of the scenes to be executed as real tests.
-  /// @param dependencies A map that holds dependencies of a given scene in main.
-  /// @param afterEach    The names of the scenes to be executed in the `afterEach` scene.
-  /// @param afterAll     The names of the scenes to be executed in the `afterAll` scene.
+  /// @param beforeAll      The names of the scenes to be executed in the `beforeAll` scene.
+  /// @param beforeEach     The names of the scenes to be executed in the `beforeEach` scene.
+  /// @param value          The names of the scenes to be executed as real tests.
+  /// @param afterEach      The names of the scenes to be executed in the `afterEach` scene.
+  /// @param afterAll       The names of the scenes to be executed in the `afterAll` scene.
+  /// @param sceneCallGraph A map that holds dependencies of a scene in this plan.
+  /// @param dependencies   A map that holds dependencies in main of a given scene in main (`value`).
+  ///                       An empty list will be returned, if a queried scene is not in main (`value`).
   /// @see AutotestEngine
   /// @see PlanningStrategy
-  public record ExecutionPlan(List<String> beforeAll, List<String> beforeEach,
+  public record ExecutionPlan(List<String> beforeAll,
+                              List<String> beforeEach,
                               List<String> value,
-                              Map<String, List<String>> dependencies,
-                              List<String> afterEach, List<String> afterAll) {
+                              List<String> afterEach, List<String> afterAll,
+                              Map<String, List<String>> sceneCallGraph,
+                              Map<String, List<String>> dependencies
+  ) {
+    ExecutionPlan(List<String> beforeAll,
+                  List<String> beforeEach,
+                  List<String> value,
+                  List<String> afterEach, List<String> afterAll,
+                  Map<String, List<String>> sceneCallGraph) {
+      this(beforeAll,
+           beforeEach,
+           value,
+           afterEach,
+           afterAll,
+           sceneCallGraph,
+           composeDependencyMapInMain(value, sceneCallGraph));
+    }
+    
     /**
      * Returns a list of scenes, each of on which a scene specified by `sceneName` depends.
      * Note that only dependencies in `value` list will be returned in the list.
+     *
      * @param sceneName A scene name in main (`value` list)
      * @return A list of dependencies of a given `sceneName`.
-     *
+     * In case `sceneName` doesn't have an entry in `dependencies`, an empty list will be returned.
      */
     List<String> dependenciesOf(String sceneName) {
-      return dependencies.get(sceneName);
+      return dependencies().getOrDefault(sceneName, emptyList());
     }
+    
+    private static Map<String, List<String>> composeDependencyMapInMain(List<String> main, Map<String, List<String>> sceneCallGraph) {
+      var ret = new HashMap<String, List<String>>();
+      for (var each : main) {
+        ret.put(each, new ArrayList<>(intersect(allDependenciesOf(each, sceneCallGraph), new LinkedHashSet<>(main))));
+      }
+      return ret;
+    }
+    
+    private static LinkedHashSet<String> intersect(LinkedHashSet<String> a, LinkedHashSet<String> b) {
+      LinkedHashSet<String> ret = new LinkedHashSet<>(a);
+      ret.retainAll(b);
+      return ret;
+    }
+    
+    private static LinkedHashSet<String> allDependenciesOf(String scene, Map<String, List<String>> sceneCallGraph) {
+      var ret = new LinkedHashSet<String>();
+      dependenciesOf(ret, scene, sceneCallGraph);
+      return ret;
+    }
+    
+    private static void dependenciesOf(LinkedHashSet<String> out, String scene, Map<String, List<String>> sceneCallGraph) {
+      if (sceneCallGraph.containsKey(scene)) {
+        List<String> dependenciesOfScene = sceneCallGraph.get(scene);
+        out.addAll(dependenciesOfScene);
+        for (var each : dependenciesOfScene) {
+          dependenciesOf(out, each, sceneCallGraph);
+        }
+      }
+    }
+    
   }
   
   /// A class that models a result of a scene execution.
