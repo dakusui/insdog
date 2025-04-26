@@ -5,6 +5,7 @@ import com.github.dakusui.actionunit.io.Writer;
 import com.github.valid8j.pcond.fluent.Statement;
 import jp.co.moneyforward.autotest.framework.action.ActionComposer;
 import jp.co.moneyforward.autotest.framework.action.Call;
+import jp.co.moneyforward.autotest.framework.action.Scene;
 import jp.co.moneyforward.autotest.framework.action.SceneCall;
 import jp.co.moneyforward.autotest.framework.annotations.AutotestExecution;
 import jp.co.moneyforward.autotest.framework.annotations.ClosedBy;
@@ -37,10 +38,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.github.dakusui.actionunit.core.ActionSupport.named;
-import static com.github.dakusui.actionunit.core.ActionSupport.sequential;
 import static com.github.dakusui.actionunit.exceptions.ActionException.wrap;
 import static com.github.valid8j.classic.Requires.requireNonNull;
 import static com.github.valid8j.fluent.Expectations.*;
@@ -319,16 +319,14 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
       final ActionComposer actionComposer = createActionComposer(createExecutionEnvironment(extensionContext,
                                                                                             () -> Optional.of(displayName).orElse("XXX"),
                                                                                             "main"));
-      final Action value = sceneCallToAction(sceneCallMap.get(sceneName),
-                                             actionComposer);
-      final List<String> coveredInMain = coveredInMain(extensionContext);
+      final List<String> alreadyPerformedInMain = alreadyPerformedInMain(extensionContext);
       final List<String> dependencyNames = Optional.ofNullable(executionPlan(extensionContext).dependenciesOf(sceneName))
                                                    .orElse(emptyList());
-      final List<Action> d = dependencyNames.stream()
-                                            .filter(n -> !coveredInMain.contains(n))
-                                            .map(sceneCallMap::get)
-                                            .map(s -> sceneCallToAction(s, actionComposer))
-                                            .toList();
+      final List<SceneCall> d = IntStream.range(0, dependencyNames.size()).map(i -> dependencyNames.size() - i - 1)
+                                         .mapToObj(dependencyNames::get)
+                                         .filter(n -> !alreadyPerformedInMain.contains(n))
+                                         .map(sceneCallMap::get)
+                                         .toList();
       
       @Override
       public List<Extension> getAdditionalExtensions() {
@@ -341,13 +339,14 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
           @Override
           public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext1) throws ParameterResolutionException {
             if (parameterContext.getParameter().getType().isAssignableFrom(Action.class)) {
-              coveredInMain.add(sceneName);
-              coveredInMain.addAll(dependencyNames);
+              alreadyPerformedInMain.add(sceneName);
+              alreadyPerformedInMain.addAll(dependencyNames);
               if (d.isEmpty())
-                return value;
-              if (d.size() == 1)
-                return sequential(named("dependency", d.getFirst()), value);
-              return sequential(named("dependencies", sequential(d)), value);
+                return sceneCallToAction(sceneCallMap.get(sceneName), actionComposer);
+              Scene.Builder b = Scene.begin();
+              d.forEach(b::addCall);
+              b.addCall(sceneCallMap.get(sceneName));
+              return b.end().toSequentialAction(actionComposer);
             } else if (parameterContext.getParameter().getType().isAssignableFrom(String.class)) {
               return sceneName;
             } else if (parameterContext.getParameter().getType().isAssignableFrom(Writer.class)) {
@@ -540,7 +539,7 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
   }
   
   @SuppressWarnings("unchecked")
-  private static List<String> coveredInMain(ExtensionContext extensionContext) {
+  private static List<String> alreadyPerformedInMain(ExtensionContext extensionContext) {
     return (List<String>) exetensionContextStore(extensionContext).get("coveredInMain");
   }
   
@@ -687,9 +686,11 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
                               Map<String, List<String>> dependencies,
                               List<String> afterEach, List<String> afterAll) {
     /**
+     * Returns a list of scenes, each of on which a scene specified by `sceneName` depends.
+     * Note that only dependencies in `value` list will be returned in the list.
      * @param sceneName A scene name in main (`value` list)
      * @return A list of dependencies of a given `sceneName`.
-     * Note that only dependencies in `value` list will be returned in the list.
+     *
      */
     List<String> dependenciesOf(String sceneName) {
       return dependencies.get(sceneName);
