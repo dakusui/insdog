@@ -2,6 +2,7 @@ package jp.co.moneyforward.autotest.framework.action;
 
 import com.github.dakusui.actionunit.core.Context;
 import com.github.valid8j.pcond.forms.Printables;
+import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import static java.lang.String.format;
 /// @param resolverFunction A function that resolves the value.
 ///
 public record Resolver(String variableName, Function<Context, Object> resolverFunction) {
+  private static final Logger logger = org.slf4j.LoggerFactory.getLogger(Resolver.class);
   ///
   /// Typically, this function is called by a method `resolverFor` and the `variableName` passed to it should be used as `variableNameInScene` for this method.
   ///
@@ -29,8 +31,19 @@ public record Resolver(String variableName, Function<Context, Object> resolverFu
   ///
   public static Function<Context, Object> resolver(String variableName, String variableStoreName) {
     return Printables.function(format("resolve[%s][%s]", variableName, variableStoreName),
-                               context -> context.defined(variableStoreName) ? context.<Map<String, Object>>valueOf(variableStoreName).get(variableName)
-                                                                             : null);
+                               context -> resolve(variableName, variableStoreName, context));
+  }
+  
+  private static Object resolve(String variableName, String variableStoreName, Context context) {
+    if (context.defined(variableStoreName)) {
+      Map<String, Object> variableStore = context.valueOf(variableStoreName);
+      if (!variableStore.containsKey(variableName)) {
+        logger.warn("A variable: '{}' was not found in a variable store: '{}'.", variableName, variableStoreName);
+      }
+      logger.trace("A variable store: '{}' was not found in a context.", variableStoreName);
+      return variableStore.get(variableName);
+    }
+    return null;
   }
   
   ///
