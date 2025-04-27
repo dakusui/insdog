@@ -140,9 +140,13 @@ public class ResolverBundle extends HashMap<String, Function<Context, Object>> {
   }
   
   private static List<String> exportedVariablesOf(Method method) {
-    return List.of(Optional.ofNullable(method.getAnnotation(Export.class))
-                           .map(Export::value)
-                           .orElse(new String[]{Scene.DEFAULT_DEFAULT_VARIABLE_NAME}));
+    return Stream.concat(Optional.ofNullable(method.getAnnotation(To.class))
+                                 .map(To::value)
+                                 .stream(),
+                         Arrays.stream(Optional.ofNullable(method.getAnnotation(Export.class))
+                                               .map(Export::value)
+                                               .orElse(new String[]{Scene.DEFAULT_DEFAULT_VARIABLE_NAME})))
+                 .toList();
   }
   
   private static Map<String, Function<Context, Object>> resolversToMap(List<Resolver> resolvers) {

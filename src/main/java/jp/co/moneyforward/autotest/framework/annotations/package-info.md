@@ -19,16 +19,26 @@ Meaning that if you don't give this annotation, it simply doesn't recognize a me
 **NOTE:** Currently, the framework doesn't do validations on your class at all.
 Be careful.
 
-## `@Export`: Exporting Variables for Other Scenes
+## `@Export`, `@To`: Exporting Variables for Other Scenes
 
 This annotation can be attached to a **Scene** providing method.
 Its value specifies the variable names that can be used by other **Scene** providing methods, which depend on the attached **Scene** providing method.
+`@To` is very similar to `@Export`.
+The difference is you can only specify one variable with `@To`.
+For non-`Scene` returning methods, `@To` should be preferred over `@Export`.
 
-## `@DependsOn`, `@When`, and `@ClosedBy`
+## `@Given`(`@DependsOn`), `@When`, and `@ClosedBy`
 
-If you choose a `PlanningSteatedy.DEPENDENCY_BASED` for `@AutotextExecution.Spec#planExecutionWith`, the **InsDog** framework respects the annotations `@DependsOn`, `@When`, and `@ClosedBy` attached to the **Scene** providing methods.
+If you choose a `PlanningSteatedy.DEPENDENCY_BASED` for `@AutotextExecution.Spec#planExecutionWith`, the **InsDog** framework respects the annotations `@Given`, `@When`, and `@ClosedBy` attached to the **Scene** providing methods.
+
+`@DependsOn` is a synonym for `@Given`, which is already deprecated and planned to retire.
 
 For more details of their semantics, check respective documents of annotations and the `PlanningStrategy`.
+
+## Usages
+
+* `@AutotestExecution`
+* `@ClosedBy`
 
 ## References
 
