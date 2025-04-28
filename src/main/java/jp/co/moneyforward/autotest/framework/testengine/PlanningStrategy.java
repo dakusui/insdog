@@ -62,6 +62,7 @@ public enum PlanningStrategy {
   /// @see Given
   ///
   DEPENDENCY_BASED {
+    
     @Override
     public AutotestEngine.ExecutionPlan planExecution(AutotestExecution.Spec executionSpec,
                                                       Map<String, List<String>> sceneCallGraph,
@@ -73,17 +74,29 @@ public enum PlanningStrategy {
                                     .findFirst()
                                     .orElseThrow(NoSuchElementException::new);
       List<String> beforeAll = sorted.subList(0, sorted.indexOf(firstSpecified));
-      List<String> main = sorted.subList(sorted.indexOf(firstSpecified), sorted.size());
-      AutotestEngine.ExecutionPlan executionPlan = composeSceneCallGraph(executionSpec, sceneCallGraph, beforeAll, main);
-      List<String> assertionIncludingMain = includeAssertions(executionPlan.value(), assertions);
+      AutotestEngine.ExecutionPlan executionPlan = composeSceneCallGraph(executionSpec, sceneCallGraph, beforeAll, sorted.subList(sorted.indexOf(firstSpecified), sorted.size()));
+      return buildExecutionPlanWithDependencyMap(sceneCallGraph, includeAssertions(executionPlan, assertions));
+    }
+    
+    private static AutotestEngine.ExecutionPlan includeAssertions(AutotestEngine.ExecutionPlan executionPlan, Map<String, List<String>> assertions) {
+      return new AutotestEngine.ExecutionPlan(executionPlan.beforeAll(),
+                                              executionPlan.beforeEach(),
+                                              includeAssertions(executionPlan.value(), assertions),
+                                              executionPlan.afterEach(),
+                                              executionPlan.afterAll(),
+                                              executionPlan.dependencies(),
+                                              new HashMap<>());
+    }
+    
+    private static AutotestEngine.ExecutionPlan buildExecutionPlanWithDependencyMap(Map<String, List<String>> sceneCallGraph, AutotestEngine.ExecutionPlan executionPlan) {
       return new AutotestEngine.ExecutionPlan(
           executionPlan.beforeAll(),
           executionPlan.beforeEach(),
-          assertionIncludingMain,
+          executionPlan.value(),
           executionPlan.afterEach(),
           executionPlan.afterAll(),
           executionPlan.dependencies(),
-          composeDependencyMapInMain(assertionIncludingMain, sceneCallGraph)
+          composeDependencyMapInMain(executionPlan.value(), sceneCallGraph)
       );
     }
     
