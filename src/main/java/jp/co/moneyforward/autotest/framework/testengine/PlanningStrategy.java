@@ -5,9 +5,7 @@ import jp.co.moneyforward.autotest.framework.annotations.ClosedBy;
 import jp.co.moneyforward.autotest.framework.annotations.Given;
 import jp.co.moneyforward.autotest.framework.annotations.When;
 
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -35,7 +33,8 @@ public enum PlanningStrategy {
           asList(executionSpec.value()),
           asList(executionSpec.afterEach()),
           asList(executionSpec.afterAll()),
-          sceneCallGraph
+          sceneCallGraph,
+          composeDependencyMapInMain(List.of(executionSpec.value()), sceneCallGraph)
       );
     }
   },
@@ -75,26 +74,30 @@ public enum PlanningStrategy {
                                     .orElseThrow(NoSuchElementException::new);
       List<String> beforeAll = sorted.subList(0, sorted.indexOf(firstSpecified));
       List<String> main = sorted.subList(sorted.indexOf(firstSpecified), sorted.size());
-      return includeAssertions(new AutotestEngine.ExecutionPlan(
-                                   mergeListsByAppendingMissedOnes(List.of(executionSpec.beforeAll()), beforeAll),
-                                   asList(executionSpec.beforeEach()),
-                                   main,
-                                   asList(executionSpec.afterEach()),
-                                   asList(executionSpec.afterAll()),
-                                   sceneCallGraph),
-                               assertions);
-    }
-    
-    private static AutotestEngine.ExecutionPlan includeAssertions(AutotestEngine.ExecutionPlan executionPlan, Map<String, List<String>> assertions) {
+      AutotestEngine.ExecutionPlan executionPlan = composeSceneCallGraph(executionSpec, sceneCallGraph, beforeAll, main);
+      List<String> assertionIncludingMain = includeAssertions(executionPlan.value(), assertions);
       return new AutotestEngine.ExecutionPlan(
           executionPlan.beforeAll(),
           executionPlan.beforeEach(),
-          includeAssertions(executionPlan.value(), assertions),
+          assertionIncludingMain,
           executionPlan.afterEach(),
           executionPlan.afterAll(),
-          executionPlan.dependencies()
+          executionPlan.dependencies(),
+          composeDependencyMapInMain(assertionIncludingMain, sceneCallGraph)
       );
     }
+    
+    private static AutotestEngine.ExecutionPlan composeSceneCallGraph(AutotestExecution.Spec executionSpec, Map<String, List<String>> sceneCallGraph, List<String> beforeAll, List<String> main) {
+      return new AutotestEngine.ExecutionPlan(
+          mergeListsByAppendingMissedOnes(List.of(executionSpec.beforeAll()), beforeAll),
+          asList(executionSpec.beforeEach()),
+          main,
+          asList(executionSpec.afterEach()),
+          asList(executionSpec.afterAll()),
+          sceneCallGraph,
+          composeDependencyMapInMain(main, sceneCallGraph));
+    }
+    
     
     private static List<String> includeAssertions(List<String> value, Map<String, List<String>> assertions) {
       return value.stream()
@@ -104,6 +107,36 @@ public enum PlanningStrategy {
                   .toList();
     }
   };
+  
+  public static Map<String, List<String>> composeDependencyMapInMain(List<String> main, Map<String, List<String>> sceneCallGraph) {
+    var ret = new HashMap<String, List<String>>();
+    for (var each : main) {
+      ret.put(each, new ArrayList<>(intersect(allDependenciesOf(each, sceneCallGraph), new LinkedHashSet<>(main))));
+    }
+    return ret;
+  }
+  
+  private static LinkedHashSet<String> intersect(LinkedHashSet<String> a, LinkedHashSet<String> b) {
+    LinkedHashSet<String> ret = new LinkedHashSet<>(a);
+    ret.retainAll(b);
+    return ret;
+  }
+  
+  private static LinkedHashSet<String> allDependenciesOf(String scene, Map<String, List<String>> sceneCallGraph) {
+    var ret = new LinkedHashSet<String>();
+    dependenciesOf(ret, scene, sceneCallGraph);
+    return ret;
+  }
+  
+  private static void dependenciesOf(LinkedHashSet<String> out, String scene, Map<String, List<String>> sceneCallGraph) {
+    if (sceneCallGraph.containsKey(scene)) {
+      List<String> dependenciesOfScene = sceneCallGraph.get(scene);
+      out.addAll(dependenciesOfScene);
+      for (var each : dependenciesOfScene) {
+        dependenciesOf(out, each, sceneCallGraph);
+      }
+    }
+  }
   
   ///
   /// Returns an execution plan based on the design which this instance specifies.
