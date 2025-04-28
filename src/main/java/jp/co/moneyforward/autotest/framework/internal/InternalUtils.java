@@ -9,6 +9,7 @@ import com.github.valid8j.pcond.forms.Printables;
 import jp.co.moneyforward.autotest.framework.annotations.DependsOn;
 import jp.co.moneyforward.autotest.framework.annotations.Given;
 import jp.co.moneyforward.autotest.framework.annotations.Named;
+import jp.co.moneyforward.autotest.framework.annotations.When;
 import jp.co.moneyforward.autotest.framework.core.AutotestException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -45,25 +46,21 @@ public enum InternalUtils {
   
   public static final Logger LOGGER = LoggerFactory.getLogger(InternalUtils.class);
   
-  ///
   /// Returns an `Optional` of a `String` that contains a branch name.
   /// This method internally calls `InternalUtils#currentBranchNameFor(new File("."))`.
   ///
   /// @return An `Optional` of branch name `String`.
   /// @see InternalUtils#currentBranchNameFor(File)
-  ///
   public static Optional<String> currentBranchName() {
     return currentBranchNameFor(projectDir());
   }
   
-  ///
   /// Returns an `Optional` of a `String` that contains a branch name, if the given `projectDir` has `.git` directory and a current branch name of it can be retrieved.
   /// An exception will be thrown on a failure during this step.
   ///
   /// Otherwise, an empty `Optional` will be returned.
   ///
   /// @return An `Optional` of branch name `String`.
-  ///
   public static Optional<String> currentBranchNameFor(File projectDir) {
     if (!projectDir.exists())
       return Optional.empty();
@@ -124,17 +121,14 @@ public enum InternalUtils {
                                                                        : Stream.of(a);
   }
   
-  ///
   /// A shorthand method of `shorten(string, 120)`.
   ///
   /// @param string A string to be shortened.
   /// @return A shortened string.
-  ///
   public static String shorten(String string) {
     return shorten(string, 120);
   }
   
-  ///
   /// Shorten a `string` to the specified `length`.
   /// In case `string` contains  a carriage return (`\r`), a substring from the beginning of the `string` to the position
   /// of the character will be returned.
@@ -142,7 +136,6 @@ public enum InternalUtils {
   /// @param string A string to be shortened.
   /// @param length A length to which `string` to be shortened.
   /// @return A shortened string.
-  ///
   public static String shorten(String string, int length) {
     int crPos = string.indexOf('\r');
     return string.substring(0, Math.min(length,
@@ -193,18 +186,23 @@ public enum InternalUtils {
   
   public static boolean isDependencyAnnotationPresent(Method m) {
     //noinspection removal
-    return m.isAnnotationPresent(Given.class) || m.isAnnotationPresent(DependsOn.class);
+    return m.isAnnotationPresent(Given.class)
+        || m.isAnnotationPresent(When.class)
+        || m.isAnnotationPresent(DependsOn.class);
   }
   
   public static String[] getDependencyAnnotationValues(Method m) {
     //noinspection removal
-    return Stream.concat(Arrays.stream(Optional.ofNullable(m.getAnnotation(Given.class))
-                                               .map(Given::value)
-                                               .orElse(new String[0])),
-                         Arrays.stream(Optional.ofNullable(m.getAnnotation(DependsOn.class))
-                                               .map(DependsOn::value)
-                                               .orElse(new String[0])))
-                 .toArray(String[]::new);
+    return InternalUtils.concat(Arrays.stream(Optional.ofNullable(m.getAnnotation(Given.class))
+                                                      .map(Given::value)
+                                                      .orElse(new String[0])),
+                                Arrays.stream(Optional.ofNullable(m.getAnnotation(When.class))
+                                                      .map(When::value)
+                                                      .orElse(new String[0])),
+                                Arrays.stream(Optional.ofNullable(m.getAnnotation(DependsOn.class))
+                                                      .map(DependsOn::value)
+                                                      .orElse(new String[0])))
+                        .toArray(String[]::new);
   }
   
   public static String variableNameToString(String variableName) {
@@ -222,13 +220,11 @@ public enum InternalUtils {
     }
   }
   
-  ///
   /// Creates a `Date` object from a string formatted with `MMM/dd/yyyy`.
   /// `Locale.US` is used to create a `SimpleDateFormat` object.
   ///
   /// @param dateString A string from which a `Date` object is created.
   /// @return A date object created from `dateString`.
-  ///
   public static Date date(String dateString) {
     try {
       return new SimpleDateFormat("MMM/dd/yyyy", Locale.US).parse(dateString);
@@ -237,11 +233,9 @@ public enum InternalUtils {
     }
   }
   
-  ///
   /// Returns a `Date` object from the current date.
   ///
   /// @return A date object created from the current date.
-  ///
   public static Date now() {
     return new Date();
   }
@@ -250,13 +244,11 @@ public enum InternalUtils {
     return new SimpleDateFormat("HHmmss", Locale.US).format(date).replaceAll("[,. :\\-/]", "");
   }
   
-  ///
   /// Concatenates given streams.
   ///
   /// @param streams Streams to be concatenated.
   /// @param <T>     The type of the values streamed by the given `streams`.
   /// @return Concatenated stream.
-  ///
   @SafeVarargs
   public static <T> Stream<T> concat(Stream<T>... streams) {
     if (streams.length == 0)
@@ -269,12 +261,10 @@ public enum InternalUtils {
       return Stream.concat(streams[0], concat(Arrays.copyOfRange(streams, 1, streams.length)));
   }
   
-  ///
   /// Returns an action context for InsDog.
   /// The returned context is designed to print a proper message when each value in the action context is a variable store.
   ///
   /// @return A created context.
-  ///
   public static Context createContext() {
     class InsDogContext extends Context.Impl {
       @Override
@@ -292,13 +282,11 @@ public enum InternalUtils {
     return new InsDogContext();
   }
   
-  ///
   /// Creates a consumer, which gives a `consumerName`, when `toString` method is called.
   ///
   /// @param consumerName A name of the created consumer. Returned from `toString`.
   /// @param consumer     A consumer from which the returned object is created.
   /// @return A consumer which executes the `accept` method of the consumer and returns `consumerName` for `toString`.
-  ///
   public static Consumer<Context> printableConsumer(final String consumerName, Consumer<Context> consumer) {
     return new Consumer<>() {
       @Override
@@ -313,7 +301,6 @@ public enum InternalUtils {
     };
   }
   
-  ///
   /// Creates a leaf action, which executes the `accept` method of `contextConsumer`.
   /// Inside this method, the given `contextConsumer` method is made printable using the `printableConsumer` method.
   /// Then it will be passed to `ActionSupport#leaf` method to turn it into an action.
@@ -321,12 +308,10 @@ public enum InternalUtils {
   /// @param name            A name of the action.
   /// @param contextConsumer A consumer to define the behavior of the returned action.
   /// @return A leaf action created from the `contextConsumer`.
-  ///
   public static Action action(String name, Consumer<Context> contextConsumer) {
     return leaf(printableConsumer(name, contextConsumer));
   }
   
-  ///
   /// Creates a trivial leaf action, which is the same as an action created by `InternalUtils.action(String, Consumer<Context>)`.
   ///
   /// @param name            A name of the action.
@@ -335,22 +320,18 @@ public enum InternalUtils {
     return new TrivialAction(printableConsumer(name, contextConsumer));
   }
   
-  ///
   /// Returns a predicate that tests if the date given to it is after the `date`.
   ///
   /// @param date The returned predicate returns `true` if a given date is after this.
   /// @return A predicate to check if a given date is after `date`.
-  ///
   public static Predicate<Date> dateAfter(Date date) {
     return Printables.predicate("after[" + date + "]", d -> d.after(date));
   }
   
-  ///
   /// Checks if the given `object` has a `toString` method which overrides `Object#toString`.
   ///
   /// @param object An object to be checked.
   /// @return `true` - `toString` method is overridden / `false` - otherwise.
-  ///
   public static boolean isToStringOverridden(Object object) {
     return getMethod(object.getClass(), "toString").getDeclaringClass() != Object.class;
   }
@@ -418,7 +399,7 @@ public enum InternalUtils {
   /// Otherwise, an exception will be thrown.
   ///
   /// @param file A file to be deleted.
-  ///                         Must not be `null`.
+  ///                                                             Must not be `null`.
   public static void removeFile(File file) {
     try {
       Path pathToDelete = requireNonNull(file).toPath();

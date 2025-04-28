@@ -689,20 +689,6 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
                               Map<String, List<String>> sceneCallGraph,
                               Map<String, List<String>> dependencies
   ) {
-    ExecutionPlan(List<String> beforeAll,
-                  List<String> beforeEach,
-                  List<String> value,
-                  List<String> afterEach, List<String> afterAll,
-                  Map<String, List<String>> sceneCallGraph) {
-      this(beforeAll,
-           beforeEach,
-           value,
-           afterEach,
-           afterAll,
-           sceneCallGraph,
-           composeDependencyMapInMain(value, sceneCallGraph));
-    }
-    
     /**
      * Returns a list of scenes, each of on which a scene specified by `sceneName` depends.
      * Note that only dependencies in `value` list will be returned in the list.
@@ -714,37 +700,6 @@ public class AutotestEngine implements BeforeAllCallback, BeforeEachCallback, Te
     List<String> dependenciesOf(String sceneName) {
       return dependencies().getOrDefault(sceneName, emptyList());
     }
-    
-    private static Map<String, List<String>> composeDependencyMapInMain(List<String> main, Map<String, List<String>> sceneCallGraph) {
-      var ret = new HashMap<String, List<String>>();
-      for (var each : main) {
-        ret.put(each, new ArrayList<>(intersect(allDependenciesOf(each, sceneCallGraph), new LinkedHashSet<>(main))));
-      }
-      return ret;
-    }
-    
-    private static LinkedHashSet<String> intersect(LinkedHashSet<String> a, LinkedHashSet<String> b) {
-      LinkedHashSet<String> ret = new LinkedHashSet<>(a);
-      ret.retainAll(b);
-      return ret;
-    }
-    
-    private static LinkedHashSet<String> allDependenciesOf(String scene, Map<String, List<String>> sceneCallGraph) {
-      var ret = new LinkedHashSet<String>();
-      dependenciesOf(ret, scene, sceneCallGraph);
-      return ret;
-    }
-    
-    private static void dependenciesOf(LinkedHashSet<String> out, String scene, Map<String, List<String>> sceneCallGraph) {
-      if (sceneCallGraph.containsKey(scene)) {
-        List<String> dependenciesOfScene = sceneCallGraph.get(scene);
-        out.addAll(dependenciesOfScene);
-        for (var each : dependenciesOfScene) {
-          dependenciesOf(out, each, sceneCallGraph);
-        }
-      }
-    }
-    
   }
   
   /// A class that models a result of a scene execution.
