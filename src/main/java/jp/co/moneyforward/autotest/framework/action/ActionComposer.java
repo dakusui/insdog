@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -18,7 +19,9 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static com.github.dakusui.actionunit.core.ActionSupport.*;
-import static com.github.valid8j.classic.Requires.requireNonNull;
+import static com.github.valid8j.fluent.Expectations.require;
+import static com.github.valid8j.fluent.Expectations.value;
+import static java.util.Collections.unmodifiableList;
 import static jp.co.moneyforward.autotest.framework.internal.InternalUtils.*;
 
 /// An interface that models a factory of actions.
@@ -50,6 +53,12 @@ public interface ActionComposer {
   /// @return Currently ongoing `SceneCall` object.
   SceneCall ongoingSceneCall();
   
+  /// Returns all currently ongoing `SceneCall` objects.
+  /// The last one is the most inner one.
+  ///
+  /// @return A list of currently ongoing `SceneCall` objects.
+  List<SceneCall> ongoingSceneCalls();
+  
   /// Returns an execution environment in which actions created by this composer objects are performed.
   ///
   /// @return An execution environment.
@@ -62,8 +71,9 @@ public interface ActionComposer {
   /// @param sceneCall A scene call from which an action should be created.
   /// @return A sequential action created from `sceneCall`.
   default Action create(SceneCall sceneCall) {
-    return sequential(concat(Stream.of(sceneCall.begin(ongoingWorkingVariableStoreNames())),
-                             InternalUtils.flattenSequentialAction(sceneCall.targetScene().toSequentialAction(this)),
+    return sequential(concat(Stream.of(sceneCall.begin(this)),
+                             flattenSequentialAction(sceneCall.targetScene()
+                                                              .toSequentialAction(this)),
                              Stream.of(sceneCall.end(ongoingWorkingVariableStoreNames())))
                           .toList());
   }
@@ -151,11 +161,16 @@ public interface ActionComposer {
     return new ActionComposer() {
       final List<String> ongoingWorkingVariableStoreNames = new ArrayList<>();
       
-      SceneCall ongoingSceneCall = null;
+      final List<SceneCall> ongoingSceneCalls = new LinkedList<>();
       
       @Override
       public SceneCall ongoingSceneCall() {
-        return requireNonNull(ongoingSceneCall);
+        return require(value(ongoingSceneCalls).toBe().notEmpty()).getLast();
+      }
+      
+      @Override
+      public List<SceneCall> ongoingSceneCalls() {
+        return unmodifiableList(this.ongoingSceneCalls);
       }
       
       @Override
@@ -165,12 +180,11 @@ public interface ActionComposer {
       
       @Override
       public Action create(SceneCall sceneCall) {
-        var before = this.ongoingSceneCall;
         try {
-          this.ongoingSceneCall = sceneCall;
+          this.ongoingSceneCalls.add(sceneCall);
           return ActionComposer.super.create(sceneCall);
         } finally {
-          this.ongoingSceneCall = before;
+          this.ongoingSceneCalls.removeLast();
         }
       }
       
