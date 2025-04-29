@@ -213,6 +213,10 @@ public enum InternalUtils {
     return variableName;
   }
   
+  public static String spaces(int i) {
+    return " ".repeat(Math.max(0, i));
+  }
+  
   // NOSONAR: Intrusive warning. Number of hierarchical depth should not be checked against very well known library such as opentest4j
   public static class AssumptionViolation extends TestAbortedException {
     public AssumptionViolation(String message) {

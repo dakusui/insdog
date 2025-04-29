@@ -12,6 +12,7 @@ import jp.co.moneyforward.autotest.framework.utils.InsdogUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.text.MessageFormat;
 import java.util.*;
 
@@ -111,23 +112,28 @@ public enum AutotestEngineUtils {
       } catch (IllegalAccessException | InvocationTargetException e) {
         throw wrap(e);
       }
-    }).describe(method.getName());
+    }).describe(method.getName() + composeParameterNames(method));
+  }
+  
+  private static String composeParameterNames(Method method) {
+    return Arrays.stream(method.getParameters())
+                 .map(AutotestEngineUtils::describeParameterName)
+                 .collect(joining(", ", "(", ")"));
   }
   
   private static Object[] composeArgsFor(Method method, Map<String, Object> in) {
     List<String> errors = new ArrayList<>();
-      Object[] ret = Arrays.stream(method.getParameters())
-                             .map(p -> p.isAnnotationPresent(From.class) ? p.getAnnotation(From.class).value()
-                                                                         : DEFAULT_DEFAULT_VARIABLE_NAME)
-                             .peek(from -> {
-                               if (!in.containsKey(from))
-                                 errors.add(from);
-                             })
-                             .map(in::get)
-                             .toArray();
-      if (!errors.isEmpty())
-        throw new AutotestException("Undefined variables: " + errors, null);
-      return ret;
+    Object[] ret = Arrays.stream(method.getParameters())
+                         .map(AutotestEngineUtils::describeParameterName)
+                         .peek(from -> {
+                           if (!in.containsKey(from))
+                             errors.add(from);
+                         })
+                         .map(in::get)
+                         .toArray();
+    if (!errors.isEmpty())
+      throw new AutotestException("Undefined variables: " + errors, null);
+    return ret;
   }
   
   private static String composeDescriptionFor(Method m, AutotestRunner runner, Object in) {
@@ -141,6 +147,11 @@ public enum AutotestEngineUtils {
                                 Arrays.stream(m.getParameterTypes())
                                       .map(Class::getSimpleName)
                                       .collect(joining(",", "(", ")")));
+  }
+  
+  private static String describeParameterName(Parameter p) {
+    return p.isAnnotationPresent(From.class) ? p.getAnnotation(From.class).value()
+                                             : DEFAULT_DEFAULT_VARIABLE_NAME;
   }
   
   static Call methodToCall(Method method, Class<?> accessModelClass, AutotestRunner runner) {

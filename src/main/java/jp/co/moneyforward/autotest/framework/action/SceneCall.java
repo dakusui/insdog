@@ -88,20 +88,19 @@ public final class SceneCall implements Call, WithOid {
   /// is computed by `workingVariableStoreNameFor(this.targetScene().oid())`.
   ///
   /// @return An action, which marks the beginning of a sequence of main actions.
-  public Action begin(List<String> ongoingWorkingVariableStoreNames) {
+  public Action begin(ActionComposer actionComposer) {
+    List<String> ongoingWorkingVariableStoreNames = actionComposer.ongoingWorkingVariableStoreNames();
     try {
       String ongoingWorkingVariableStoreName = ongoingWorkingVariableStoreNames.isEmpty() ? null
                                                                                           : ongoingWorkingVariableStoreNames.getLast();
-      return action("variables:" + this.resolverBundle()
-                                       .keySet()
-                                       .stream()
-                                       .filter(n -> !n.equals("*ALL*"))
-                                       .map(InternalUtils::variableNameToString)
-                                       .toList(),
-                    c -> c.assignTo(workingVariableStoreName(),
-                                    composeWorkingVariableStore(ongoingWorkingVariableStoreName,
-                                                                this,
-                                                                c)));
+      String indentation = InternalUtils.spaces(ongoingWorkingVariableStoreNames.size() * 2);
+      return action(indentation + "variables:" + availableVariableNames(actionComposer.ongoingSceneCalls()
+                                                                                      .stream()
+                                                                                      .map(SceneCall::resolverBundle)
+                                                                                      .toList()),
+                    c -> c.assignTo(
+                        workingVariableStoreName(),
+                        composeWorkingVariableStore(ongoingWorkingVariableStoreName, this, c)));
     } finally {
       ongoingWorkingVariableStoreNames.add(workingVariableStoreName());
     }
@@ -113,7 +112,8 @@ public final class SceneCall implements Call, WithOid {
   /// name is computed by `workingVariableStoreNameFor(this.targetScene().oid())`.
   ///
   /// @return An action, which marks an ending of a sequence of main actions.
-  public Action end(List<String> ongoingWorkingVariableStoreNames) {
+  public Action end(ActionComposer actionComposer) {
+    List<String> ongoingWorkingVariableStoreNames = actionComposer.ongoingWorkingVariableStoreNames();
     ongoingWorkingVariableStoreNames.removeLast();
     return trivialAction("END[" + outputVariableStoreName() + "]", c -> {
       c.assignTo(outputVariableStoreName(), c.valueOf(workingVariableStoreName()));
@@ -144,12 +144,22 @@ public final class SceneCall implements Call, WithOid {
     Object value = r.apply(context);
     if (k.equals("*ALL*") && out.containsKey(k)) {
       //noinspection unchecked
-      ((Map<String, Object>)out.get(k)).putAll((Map<? extends String, ?>) value);
+      ((Map<String, Object>) out.get(k)).putAll((Map<? extends String, ?>) value);
       return;
     }
     if (out.containsKey(k)) {
       LOGGER.warn("A variable: '{}'({}) is overwritten with: '{}'.", k, out.get(k), value);
     }
     out.put(k, value);
+  }
+  
+  private static List<String> availableVariableNames(List<ResolverBundle> resolverBundle) {
+    return resolverBundle.stream()
+                         .flatMap(b -> b.keySet().stream())
+                         .sorted()
+                         .distinct()
+                         .filter(n -> !n.equals("*ALL*"))
+                         .map(InternalUtils::variableNameToString)
+                         .toList();
   }
 }
