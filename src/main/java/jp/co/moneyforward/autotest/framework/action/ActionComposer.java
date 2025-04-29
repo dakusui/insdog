@@ -74,7 +74,7 @@ public interface ActionComposer {
     return sequential(concat(Stream.of(sceneCall.begin(this)),
                              flattenSequentialAction(sceneCall.targetScene()
                                                               .toSequentialAction(this)),
-                             Stream.of(sceneCall.end(ongoingWorkingVariableStoreNames())))
+                             Stream.of(sceneCall.end(this)))
                           .toList());
   }
   

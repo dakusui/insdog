@@ -112,7 +112,8 @@ public final class SceneCall implements Call, WithOid {
   /// name is computed by `workingVariableStoreNameFor(this.targetScene().oid())`.
   ///
   /// @return An action, which marks an ending of a sequence of main actions.
-  public Action end(List<String> ongoingWorkingVariableStoreNames) {
+  public Action end(ActionComposer actionComposer) {
+    List<String> ongoingWorkingVariableStoreNames = actionComposer.ongoingWorkingVariableStoreNames();
     ongoingWorkingVariableStoreNames.removeLast();
     return trivialAction("END[" + outputVariableStoreName() + "]", c -> {
       c.assignTo(outputVariableStoreName(), c.valueOf(workingVariableStoreName()));
