@@ -16,8 +16,9 @@ import java.util.stream.Stream;
 ///
 /// This class is deprecated and kept only the sake for compatibility.
 /// This class will be removed in the next major version.
+/// @deprecated Use {@link jp.co.moneyforward.autotest.framework.internal.InternalUtils} instead.
 ///
-@Deprecated
+@Deprecated(forRemoval = true)
 public enum InternalUtils {
   ;
   
