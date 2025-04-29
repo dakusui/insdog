@@ -4,6 +4,7 @@ jp.co.moneyforward.autotest.framework.annotations
 jp.co.moneyforward.autotest.framework.cli
 jp.co.moneyforward.autotest.framework.core
 jp.co.moneyforward.autotest.framework.exceptions
+jp.co.moneyforward.autotest.framework.internal
 jp.co.moneyforward.autotest.framework.selftest
 jp.co.moneyforward.autotest.framework.testengine
 jp.co.moneyforward.autotest.framework.utils
