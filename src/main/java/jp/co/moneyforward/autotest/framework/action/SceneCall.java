@@ -92,12 +92,13 @@ public final class SceneCall implements Call, WithOid {
     try {
       String ongoingWorkingVariableStoreName = ongoingWorkingVariableStoreNames.isEmpty() ? null
                                                                                           : ongoingWorkingVariableStoreNames.getLast();
-      return action("variables:" + this.resolverBundle()
-                                       .keySet()
-                                       .stream()
-                                       .filter(n -> !n.equals("*ALL*"))
-                                       .map(InternalUtils::variableNameToString)
-                                       .toList(),
+      String indentation = InternalUtils.spaces(ongoingWorkingVariableStoreNames.size() * 2);
+      return action(indentation + "variables:" + this.resolverBundle()
+                                                     .keySet()
+                                                     .stream()
+                                                     .filter(n -> !n.equals("*ALL*"))
+                                                     .map(InternalUtils::variableNameToString)
+                                                     .toList(),
                     c -> c.assignTo(workingVariableStoreName(),
                                     composeWorkingVariableStore(ongoingWorkingVariableStoreName,
                                                                 this,
@@ -144,7 +145,7 @@ public final class SceneCall implements Call, WithOid {
     Object value = r.apply(context);
     if (k.equals("*ALL*") && out.containsKey(k)) {
       //noinspection unchecked
-      ((Map<String, Object>)out.get(k)).putAll((Map<? extends String, ?>) value);
+      ((Map<String, Object>) out.get(k)).putAll((Map<? extends String, ?>) value);
       return;
     }
     if (out.containsKey(k)) {

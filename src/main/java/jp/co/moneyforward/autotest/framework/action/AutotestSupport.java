@@ -18,7 +18,7 @@ public enum AutotestSupport {
   /// Returns a `Call` object for a given `scene`.
   ///
   /// This method internally calls `new SceneCall(Scene, String, ResolverBundle)`.
-  /// A `ResolverBundle` is created from `scene.inputVariableNames()` and `scene.outputVariableNames()`.
+  /// A `ResolverBundle` is created from `scene.inputVariableDisplayNames()` and `scene.outputVariableNames()`.
   ///
   /// @param scene             A scene for which a call is created.
   /// @param variableStoreName A name of a variable store in which the `scene` is performed.

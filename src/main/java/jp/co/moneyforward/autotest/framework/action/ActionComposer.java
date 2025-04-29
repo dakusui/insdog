@@ -96,8 +96,8 @@ public interface ActionComposer {
   
   default Action create(ActCall<?, ?> actCall) {
     SceneCall ongoingSceneCall = ongoingSceneCall();
-    
-    return InternalUtils.action(variableNameToString(actCall.outputVariableName()) + ":=" + actCall.act().name() + "[" + variableNameToString(actCall.inputVariableName()) + "]",
+    String indentation = InternalUtils.spaces(ongoingWorkingVariableStoreNames().size() * 2);
+    return InternalUtils.action(indentation + variableNameToString(actCall.outputVariableName()) + ":=" + actCall.act().name() + "[" + variableNameToString(actCall.inputVariableName()) + "]",
                                 toContextConsumerFromAct(ongoingSceneCall,
                                                          actCall,
                                                          this.executionEnvironment()));
